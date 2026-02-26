@@ -26,7 +26,7 @@ $ npm install -g @hesed/bb
 $ bb COMMAND
 running command...
 $ bb (--version)
-@hesed/bb/0.1.0 darwin-arm64 node-v22.14.0
+@hesed/bb/0.1.0 linux-x64 node-v20.20.0
 $ bb --help [COMMAND]
 USAGE
   $ bb COMMAND
@@ -64,11 +64,11 @@ Add Atlassian authentication
 
 ```
 USAGE
-  $ bb bb auth add [--json] [-e <value>] [-t <value>]
+  $ bb bb auth add -e <value> -t <value> [--json]
 
 FLAGS
-  -e, --email=<value>  Account email:
-  -t, --token=<value>  API Token:
+  -e, --email=<value>  (required) Account email:
+  -t, --token=<value>  (required) API Token:
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -108,11 +108,11 @@ Update existing authentication
 
 ```
 USAGE
-  $ bb bb auth update [--json] [-e <value>] [-t <value>]
+  $ bb bb auth update -e <value> -t <value> [--json]
 
 FLAGS
-  -e, --email=<value>  Account email
-  -t, --token=<value>  API Token
+  -e, --email=<value>  (required) Account email
+  -t, --token=<value>  (required) API Token
 
 GLOBAL FLAGS
   --json  Format output as json.
