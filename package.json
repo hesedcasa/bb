@@ -1,7 +1,7 @@
 {
   "name": "@hesed/bb",
   "description": "CLI for Bitbucket API interaction",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Hesed",
   "bin": {
     "bb": "./bin/run.js"
