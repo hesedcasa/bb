@@ -56,9 +56,6 @@
     "bin": "bb",
     "dirname": "bb",
     "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-*"
-    ],
     "topicSeparator": " ",
     "topics": {}
   },
