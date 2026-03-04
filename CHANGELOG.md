@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/hesedcasa/bb/compare/v0.2.0...v0.2.1) (2026-03-04)
+
+
+### 🛠️ Fixes
+
+* remove unused oclif plugin ([a3a4edf](https://github.com/hesedcasa/bb/commit/a3a4edfb02a3e756e778c339e3579586f557bda8))
+
 ## [0.2.0](https://github.com/hesedcasa/bb/compare/v0.1.0...v0.2.0) (2026-02-26)
 
 
