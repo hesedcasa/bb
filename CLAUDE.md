@@ -82,6 +82,10 @@ interface ApiResult {
    - Call `clearClients()` for cleanup
    - Output with `this.logJson(result)` or `this.log(formatAsToon(result))`
 
+**Output variants:**
+- **JSON/TOON** (most commands): include a `--toon` flag; output via `this.logJson(result)` or `this.log(formatAsToon(result))`
+- **Plain text** (e.g. diff): omit `--toon`; on success output `this.log(result.data as string)`, on failure fall back to `this.logJson(result)`
+
 Example pattern from `src/commands/bb/repo/get.ts`:
 
 ```typescript
@@ -129,6 +133,10 @@ export default class RepoGet extends Command {
 2. Export wrapper function in `bitbucket-client.ts` with `initBitbucket` pattern
 3. Use `ApiResult` return type for consistent error handling
 
+**Choosing the right private request method in `BitbucketApi`:**
+- `request(path, options?)` — for JSON responses (most endpoints); parses response body as JSON and returns it in `data`
+- `requestText(path)` — for plain-text responses (e.g. diff endpoints); returns raw text string in `data` with `Accept: text/plain`
+
 ## Configuration
 
 Authentication config is stored in JSON at `~/.config/bb/bb-config.json` (platform-dependent):
@@ -153,6 +161,7 @@ Authentication config is stored in JSON at `~/.config/bb/bb-config.json` (platfo
 Two distinct testing patterns depending on layer:
 
 **Command tests** (`test/commands/bb/`): Use `esmock` to mock all three dependencies, instantiate the command class directly, and stub `logJson`/`log` on the instance:
+
 ```typescript
 const imported = await esmock('../../../../src/commands/bb/repo/get.js', {
   '../../../../src/bitbucket/bitbucket-client.js': {clearClients: clearClientsStub, getRepository: getRepositoryStub},
@@ -160,12 +169,16 @@ const imported = await esmock('../../../../src/commands/bb/repo/get.js', {
   '../../../../src/format.js': {formatAsToon: formatAsToonStub},
 })
 const RepoGet = imported.default
-const cmd = new RepoGet(['my-ws', 'my-repo'], {root: process.cwd(), runHook: stub().resolves({failures: [], successes: []})} as any)
+const cmd = new RepoGet(['my-ws', 'my-repo'], {
+  root: process.cwd(),
+  runHook: stub().resolves({failures: [], successes: []}),
+} as any)
 stub(cmd, 'logJson')
 await cmd.run()
 ```
 
 **API layer tests** (`test/bitbucket/bitbucket-api.test.ts`): Stub `globalThis.fetch` directly:
+
 ```typescript
 fetchStub = stub(globalThis, 'fetch')
 fetchStub.resolves(new Response(JSON.stringify({...}), {status: 200}))

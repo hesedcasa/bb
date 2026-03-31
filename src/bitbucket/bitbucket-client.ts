@@ -276,6 +276,23 @@ export async function approvePullRequest(
 }
 
 /**
+ * Get the diff for a pull request
+ * @param config - Bitbucket configuration
+ * @param workspace - Workspace slug or UUID
+ * @param repoSlug - Repository slug
+ * @param pullRequestId - Pull request ID
+ */
+export async function getPullRequestDiff(
+  config: Config,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+): Promise<ApiResult> {
+  const bb = await initBitbucket(config)
+  return bb.getPullRequestDiff(workspace, repoSlug, pullRequestId)
+}
+
+/**
  * Un-approve a pull request
  * @param config - Bitbucket configuration
  * @param workspace - Workspace slug or UUID
