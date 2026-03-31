@@ -175,6 +175,13 @@ export class BitbucketApi {
   }
 
   /**
+   * Get the diff for a pull request
+   */
+  async getPullRequestDiff(workspace: string, repoSlug: string, pullRequestId: number): Promise<ApiResult> {
+    return this.requestText(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/diff`)
+  }
+
+  /**
    * Get repository details
    */
   async getRepository(workspace: string, repoSlug: string): Promise<ApiResult> {
@@ -413,6 +420,40 @@ export class BitbucketApi {
         error: errorMessage,
         success: false,
       }
+    }
+  }
+
+  /**
+   * Make an authenticated request expecting a plain text response
+   */
+  private async requestText(path: string): Promise<ApiResult> {
+    try {
+      const url = `${this.getBaseUrl()}${path}`
+      const headers: Record<string, string> = {
+        Accept: 'text/plain',
+        Authorization: this.getAuthHeader(),
+      }
+
+      // eslint-disable-next-line n/no-unsupported-features/node-builtins -- fetch is available in Node 18+
+      const response = await fetch(url, {headers, method: 'GET'})
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorData: unknown
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = errorText
+        }
+
+        return {error: errorData, success: false}
+      }
+
+      const text = await response.text()
+      return {data: text, success: true}
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      return {error: errorMessage, success: false}
     }
   }
 }
