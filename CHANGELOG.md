@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/hesedcasa/bb/compare/v0.2.1...v0.3.0) (2026-03-31)
+
+
+### 🎉 Features
+
+* add pr diff command to retrieve pull request diffs ([#23](https://github.com/hesedcasa/bb/issues/23)) ([7a9b103](https://github.com/hesedcasa/bb/commit/7a9b103fcd2a7a122cd4896accb74d53ec02547d))
+
 ## [0.2.1](https://github.com/hesedcasa/bb/compare/v0.2.0...v0.2.1) (2026-03-04)
 
 
