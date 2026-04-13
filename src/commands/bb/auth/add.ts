@@ -9,7 +9,7 @@ import {clearClients, testConnection} from '../../../bitbucket/bitbucket-client.
 
 export default class AuthAdd extends Command {
   static override args = {}
-  static override description = 'Add Atlassian authentication'
+  static override description = 'Add Bitbucket authentication'
   static override enableJsonFlag = true
   static override examples = ['<%= config.bin %> <%= command.id %>']
   static override flags = {

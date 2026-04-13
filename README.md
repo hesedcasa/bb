@@ -61,7 +61,7 @@ USAGE
 
 ## `bb bb auth add`
 
-Add Atlassian authentication
+Add Bitbucket authentication
 
 ```
 USAGE
@@ -75,7 +75,7 @@ GLOBAL FLAGS
   --json  Format output as json.
 
 DESCRIPTION
-  Add Atlassian authentication
+  Add Bitbucket authentication
 
 EXAMPLES
   $ bb bb auth add
