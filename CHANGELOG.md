@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/hesedcasa/bb/compare/v0.3.0...v0.3.1) (2026-04-15)
+
+
+### 🛠️ Fixes
+
+* **docs:** update CLAUDE.md to include HTML coverage report command and enhance project keywords in package.json ([68f4ac3](https://github.com/hesedcasa/bb/commit/68f4ac3e3f344b0a815efd0c4b6ecaa18cf6d5ee))
+
 ## [0.3.0](https://github.com/hesedcasa/bb/compare/v0.2.1...v0.3.0) (2026-03-31)
 
 
