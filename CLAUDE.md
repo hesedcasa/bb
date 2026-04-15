@@ -20,6 +20,7 @@ npx mocha test/path/to/test.test.ts
 
 # Run tests with coverage
 npm run test:coverage
+npm run test:coverage:report  # Generate HTML coverage report
 
 # Lint and format
 npm run lint
@@ -38,7 +39,7 @@ src/
 ├── commands/bb/      # Oclif CLI commands, all namespaced under bb/
 │   ├── auth/        # auth add, test, update
 │   ├── pipeline/    # pipeline get, list, trigger
-│   ├── pr/          # pr approve, create, decline, get, list, merge, unapprove, update
+│   ├── pr/          # pr approve, create, decline, diff, get, list, merge, unapprove, update
 │   ├── repo/        # repo create, delete, get, list
 │   └── workspace/   # workspace get, list
 ├── bitbucket/       # Bitbucket REST API layer
@@ -206,7 +207,7 @@ fetchStub.resolves(new Response(JSON.stringify({...}), {status: 200}))
 - Functions with more than 3 parameters require `// eslint-disable-next-line max-params` above the function signature
 - JSDoc `@param` for inline object parameters must list each property individually with dot-notation (e.g. `@param options.description`) to satisfy the JSDoc linter
 - The `static override args` block in commands must be wrapped with `/* eslint-disable/enable perfectionist/sort-objects */` because Oclif processes args positionally (declaration order = parse order), preventing alphabetical sorting
-- Pre-commit hook runs format and dead code detection
+- Pre-commit hook (`npm run pre-commit`) runs format and dead code detection; also runs automatically via git hooks
 - Uses `shx` for cross-platform shell commands
 - Node.js >=18.0.0 required
 - Published as npm package `bb`

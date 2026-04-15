@@ -47,7 +47,10 @@
   ],
   "homepage": "https://github.com/hesedcasa/bb",
   "keywords": [
-    "oclif"
+    "oclif",
+    "bitbucket",
+    "cli",
+    "atlassian"
   ],
   "license": "Apache-2.0",
   "main": "dist/index.js",
