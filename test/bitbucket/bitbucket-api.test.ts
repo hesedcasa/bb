@@ -141,13 +141,13 @@ describe('BitbucketApi', () => {
   })
 
   describe('testConnection', () => {
-    it('calls GET /user', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({username: 'testuser'}), {status: 200}))
+    it('calls GET /user/workspaces', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
 
       const result = await api.testConnection()
 
       const [url, options] = fetchStub.firstCall.args
-      expect(url).to.equal('https://api.bitbucket.org/2.0/user')
+      expect(url).to.equal('https://api.bitbucket.org/2.0/user/workspaces')
       expect(options.method).to.equal('GET')
       expect(result.success).to.be.true
     })
