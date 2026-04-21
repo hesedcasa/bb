@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/hesedcasa/bb/compare/v0.3.1...v0.4.0) (2026-04-21)
+
+
+### 🎉 Features
+
+* support Bearer token auth by making email optional ([#36](https://github.com/hesedcasa/bb/issues/36)) ([982b27e](https://github.com/hesedcasa/bb/commit/982b27eea1f02e7becd5eeff4067df0af1d06624))
+
 ## [0.3.1](https://github.com/hesedcasa/bb/compare/v0.3.0...v0.3.1) (2026-04-15)
 
 
