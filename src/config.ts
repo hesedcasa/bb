@@ -3,7 +3,7 @@ import {default as path} from 'node:path'
 
 interface AuthConfig {
   apiToken: string
-  email: string
+  email?: string
   host: string
 }
 

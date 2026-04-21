@@ -13,7 +13,7 @@ export default class AuthUpdate extends Command {
   static override enableJsonFlag = true
   static override examples = ['<%= config.bin %> <%= command.id %>']
   static override flags = {
-    email: Flags.string({char: 'e', description: 'Account email', required: !process.stdout.isTTY}),
+    email: Flags.string({char: 'e', description: 'Account email', required: false}),
     token: Flags.string({char: 't', description: 'API Token', required: !process.stdout.isTTY}),
   }
 
@@ -39,7 +39,7 @@ export default class AuthUpdate extends Command {
       (await input({default: config.auth.apiToken, message: 'API Token:', prefill: 'tab', required: true}))
     const email =
       flags.email ??
-      (await input({default: config.auth.email, message: 'Account email:', prefill: 'tab', required: true}))
+      (await input({default: config.auth.email, message: 'Account email:', prefill: 'tab', required: false}))
     const answer = await confirm({message: 'Override existing config?'})
 
     if (!answer) {
@@ -49,7 +49,7 @@ export default class AuthUpdate extends Command {
     const auth = {
       auth: {
         apiToken,
-        email,
+        ...(email && {email}),
       },
     }
 

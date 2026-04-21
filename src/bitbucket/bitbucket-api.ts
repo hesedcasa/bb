@@ -9,7 +9,7 @@ export interface ApiResult {
 
 export interface Config {
   apiToken: string
-  email: string
+  email?: string
   host: string
 }
 
@@ -289,7 +289,7 @@ export class BitbucketApi {
    * Test Bitbucket API connection
    */
   async testConnection(): Promise<ApiResult> {
-    return this.request('/user')
+    return this.request('/user/workspaces')
   }
 
   /**
@@ -351,8 +351,12 @@ export class BitbucketApi {
    * Build authorization header
    */
   private getAuthHeader(): string {
-    const authString = Buffer.from(`${this.config.email}:${this.config.apiToken}`).toString('base64')
-    return `Basic ${authString}`
+    if (this.config.email) {
+      const authString = Buffer.from(`${this.config.email}:${this.config.apiToken}`).toString('base64')
+      return `Basic ${authString}`
+    }
+
+    return `Bearer ${this.config.apiToken}`
   }
 
   /**

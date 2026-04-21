@@ -84,6 +84,7 @@ interface ApiResult {
    - Output with `this.logJson(result)` or `this.log(formatAsToon(result))`
 
 **Output variants:**
+
 - **JSON/TOON** (most commands): include a `--toon` flag; output via `this.logJson(result)` or `this.log(formatAsToon(result))`
 - **Plain text** (e.g. diff): omit `--toon`; on success output `this.log(result.data as string)`, on failure fall back to `this.logJson(result)`
 
@@ -135,6 +136,7 @@ export default class RepoGet extends Command {
 3. Use `ApiResult` return type for consistent error handling
 
 **Choosing the right private request method in `BitbucketApi`:**
+
 - `request(path, options?)` — for JSON responses (most endpoints); parses response body as JSON and returns it in `data`
 - `requestText(path)` — for plain-text responses (e.g. diff endpoints); returns raw text string in `data` with `Accept: text/plain`
 
