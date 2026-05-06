@@ -1,4 +1,4 @@
-import {Command} from '@oclif/core'
+import {Command, Flags} from '@oclif/core'
 import {action} from '@oclif/core/ux'
 
 import {ApiResult} from '../../../bitbucket/bitbucket-api.js'
@@ -10,11 +10,13 @@ export default class AuthTest extends Command {
   static override description = 'Test authentication and connection'
   static override enableJsonFlag = true
   static override examples = ['<%= config.bin %> <%= command.id %>']
-  static override flags = {}
+  static override flags = {
+    profile: Flags.string({char: 'p', default: 'default', description: 'Profile name', required: false}),
+  }
 
   public async run(): Promise<ApiResult> {
-    await this.parse(AuthTest)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const {flags} = await this.parse(AuthTest)
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return {
         error: 'Missing authentication config',
