@@ -16,13 +16,14 @@ export default class PrUpdate extends Command {
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo 1 --title "Updated title"']
   static override flags = {
     description: Flags.string({description: 'Pull request description', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     title: Flags.string({description: 'Pull request title', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrUpdate)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }

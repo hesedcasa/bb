@@ -20,13 +20,14 @@ export default class RepoCreate extends Command {
     description: Flags.string({description: 'Repository description', required: false}),
     language: Flags.string({description: 'Repository language', required: false}),
     private: Flags.boolean({default: false, description: 'Make repository private', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     'project-key': Flags.string({description: 'Project key', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(RepoCreate)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }
