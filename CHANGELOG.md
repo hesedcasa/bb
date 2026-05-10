@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/hesedcasa/bb/compare/v0.4.0...v0.5.0) (2026-05-10)
+
+
+### 🎉 Features
+
+* add multi-profile auth support ([#50](https://github.com/hesedcasa/bb/issues/50)) ([3cda94e](https://github.com/hesedcasa/bb/commit/3cda94e23acd9ddd0e3d81ccfb085859dd753147))
+
 ## [0.4.0](https://github.com/hesedcasa/bb/compare/v0.3.1...v0.4.0) (2026-04-21)
 
 
