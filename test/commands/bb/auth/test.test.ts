@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable new-cap */
 import {expect} from 'chai'
 import esmock from 'esmock'
 import {type SinonStub, stub} from 'sinon'
@@ -50,6 +51,42 @@ describe('auth:test', () => {
     expect(actionStopStub.calledWith('✓ successful')).to.be.true
     expect(logStub.calledWith('Successful connection to Bitbucket')).to.be.true
     expect(result.success).to.be.true
+  })
+
+  it('passes profile flag to readConfig', async () => {
+    let receivedProfile: string | undefined
+
+    readConfigStub.callsFake(async (_dir: string, _log: any, profile?: string) => {
+      receivedProfile = profile
+      return {
+        auth: {
+          apiToken: 'work-token',
+          email: 'work@example.com',
+          host: 'https://bitbucket.org',
+        },
+      }
+    })
+
+    const imported = await esmock('../../../../src/commands/bb/auth/test.js', {
+      '../../../../src/bitbucket/bitbucket-client.js': {
+        clearClients: clearClientsStub,
+        testConnection: testConnectionStub,
+      },
+      '../../../../src/config.js': {readConfig: readConfigStub},
+      '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
+    })
+
+    testConnectionStub.resolves({data: {}, success: true})
+
+    const cmd = new imported.default(['--profile', 'work'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
+
+    await cmd.run()
+
+    expect(receivedProfile).to.equal('work')
   })
 
   it('shows error on failed connection', async () => {

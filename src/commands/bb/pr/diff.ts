@@ -1,4 +1,4 @@
-import {Args, Command} from '@oclif/core'
+import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, getPullRequestDiff} from '../../../bitbucket/bitbucket-client.js'
 import {readConfig} from '../../../config.js'
@@ -13,10 +13,13 @@ export default class PrDiff extends Command {
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'Get the diff for a pull request'
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo 123']
+  static override flags = {
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
+  }
 
   public async run(): Promise<void> {
-    const {args} = await this.parse(PrDiff)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const {args, flags} = await this.parse(PrDiff)
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }

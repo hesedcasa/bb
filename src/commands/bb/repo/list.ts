@@ -13,6 +13,7 @@ export default class RepoList extends Command {
   static override flags = {
     page: Flags.integer({default: 1, description: 'Page number', required: false}),
     pagelen: Flags.integer({default: 10, description: 'Number of items per page', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     q: Flags.string({description: 'Query string to filter repositories', required: false}),
     role: Flags.string({description: 'Filter by role (admin, contributor, member, owner)', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
@@ -20,7 +21,7 @@ export default class RepoList extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(RepoList)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }

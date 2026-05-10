@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable new-cap */
 import {expect} from 'chai'
 import esmock from 'esmock'
 import {type SinonStub, stub} from 'sinon'
@@ -17,9 +18,7 @@ describe('auth:add', () => {
     actionStartStub = stub()
     actionStopStub = stub()
     fsStub = {
-      createFile: stub().resolves(),
-      pathExists: stub().resolves(false),
-      readJSON: stub().resolves({auth: {apiToken: 'tok', email: 'e@e.com'}}),
+      readJSON: stub().rejects(new Error('ENOENT: no such file or directory')),
       writeJSON: stub().resolves(),
     }
 
@@ -37,7 +36,7 @@ describe('auth:add', () => {
   it('writes config and shows success on valid auth', async () => {
     testConnectionStub.resolves({data: {username: 'user'}, success: true})
 
-    const cmd = new AuthAdd(['-t', 'my-token', '-e', 'user@test.com'], {
+    const cmd = new AuthAdd(['-t', 'my-token', '-e', 'user@test.com', '-p', 'default'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -46,12 +45,10 @@ describe('auth:add', () => {
 
     const result = await cmd.run()
 
-    expect(fsStub.pathExists.calledOnce).to.be.true
-    expect(fsStub.createFile.calledOnce).to.be.true
     expect(fsStub.writeJSON.calledOnce).to.be.true
     const writtenData = fsStub.writeJSON.firstCall.args[1]
-    expect(writtenData.auth.apiToken).to.equal('my-token')
-    expect(writtenData.auth.email).to.equal('user@test.com')
+    expect(writtenData.profiles.default.apiToken).to.equal('my-token')
+    expect(writtenData.profiles.default.email).to.equal('user@test.com')
     expect(testConnectionStub.calledOnce).to.be.true
     expect(clearClientsStub.calledOnce).to.be.true
     expect(actionStopStub.calledWith('✓ successful')).to.be.true
@@ -59,11 +56,10 @@ describe('auth:add', () => {
     expect(result.success).to.be.true
   })
 
-  it('does not create file if config already exists', async () => {
-    fsStub.pathExists.resolves(true)
+  it('writes config with owner-only permissions', async () => {
     testConnectionStub.resolves({data: {}, success: true})
 
-    const cmd = new AuthAdd(['-t', 'tok', '-e', 'e@e.com'], {
+    const cmd = new AuthAdd(['-t', 'tok', '-e', 'e@e.com', '-p', 'default'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -72,14 +68,130 @@ describe('auth:add', () => {
 
     await cmd.run()
 
-    expect(fsStub.createFile.called).to.be.false
-    expect(fsStub.writeJSON.calledOnce).to.be.true
+    const writeOptions = fsStub.writeJSON.firstCall.args[2]
+    expect(writeOptions.mode).to.equal(0o600)
+  })
+
+  it('converts old-format auth to default profile before saving', async () => {
+    let writtenData: any = null
+
+    fsStub.readJSON.resolves({
+      auth: {apiToken: 'existing-token', email: 'existing@test.com'},
+    })
+    fsStub.writeJSON.callsFake((_path: string, data: any) => {
+      writtenData = data
+      return Promise.resolve()
+    })
+
+    testConnectionStub.resolves({data: {}, success: true})
+
+    const imported = await esmock('../../../../src/commands/bb/auth/add.js', {
+      '../../../../src/bitbucket/bitbucket-client.js': {
+        clearClients: clearClientsStub,
+        testConnection: testConnectionStub,
+      },
+      '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
+      'fs-extra': {default: fsStub},
+    })
+
+    const cmd = new imported.default(['-t', 'new-token', '-e', 'new@test.com', '-p', 'work'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+    stub(cmd, 'log')
+
+    await cmd.run()
+
+    expect(writtenData.profiles.default).to.deep.equal({
+      apiToken: 'existing-token',
+      email: 'existing@test.com',
+    })
+    expect(writtenData.profiles.work).to.deep.equal({
+      apiToken: 'new-token',
+      email: 'new@test.com',
+    })
+    expect(writtenData.auth).to.be.undefined
+  })
+
+  it('errors when adding a profile that already exists', async () => {
+    fsStub.readJSON.resolves({
+      profiles: {
+        default: {apiToken: 'existing-token', email: 'existing@test.com'},
+      },
+    })
+
+    const imported = await esmock('../../../../src/commands/bb/auth/add.js', {
+      '../../../../src/bitbucket/bitbucket-client.js': {
+        clearClients: clearClientsStub,
+        testConnection: testConnectionStub,
+      },
+      '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
+      'fs-extra': {default: fsStub},
+    })
+
+    const cmd = new imported.default(['-t', 'new-token', '-e', 'new@test.com', '-p', 'default'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+
+    let errorThrown = false
+    cmd.error = (msg: string) => {
+      errorThrown = true
+      expect(msg).to.include("Profile 'default' already exists")
+      throw new Error(msg)
+    }
+
+    try {
+      await cmd.run()
+    } catch {
+      // expected
+    }
+
+    expect(errorThrown).to.be.true
+  })
+
+  it('errors when adding default profile to old-format config', async () => {
+    fsStub.readJSON.resolves({
+      auth: {apiToken: 'test-token', email: 'test@test.com'},
+    })
+
+    const imported = await esmock('../../../../src/commands/bb/auth/add.js', {
+      '../../../../src/bitbucket/bitbucket-client.js': {
+        clearClients: clearClientsStub,
+        testConnection: testConnectionStub,
+      },
+      '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
+      'fs-extra': {default: fsStub},
+    })
+
+    const cmd = new imported.default(['-t', 'new-token', '-e', 'new@test.com', '-p', 'default'], {
+      configDir: '/tmp/test-config',
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+
+    let errorThrown = false
+    cmd.error = (msg: string) => {
+      errorThrown = true
+      expect(msg).to.include("Profile 'default' already exists")
+      throw new Error(msg)
+    }
+
+    try {
+      await cmd.run()
+    } catch {
+      // expected
+    }
+
+    expect(errorThrown).to.be.true
   })
 
   it('shows error on failed auth test', async () => {
     testConnectionStub.resolves({error: 'Unauthorized', success: false})
 
-    const cmd = new AuthAdd(['-t', 'bad', '-e', 'e@e.com'], {
+    const cmd = new AuthAdd(['-t', 'bad', '-e', 'e@e.com', '-p', 'work'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -93,10 +205,10 @@ describe('auth:add', () => {
     expect(errorStub.calledWith('Authentication is invalid. Please check your email, API Token, and URL.')).to.be.true
   })
 
-  it('writes config with owner-only permissions', async () => {
+  it('calls clearClients after execution', async () => {
     testConnectionStub.resolves({data: {}, success: true})
 
-    const cmd = new AuthAdd(['-t', 'tok', '-e', 'e@e.com'], {
+    const cmd = new AuthAdd(['-t', 'tok', '-e', 'e@e.com', '-p', 'work'], {
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -105,7 +217,6 @@ describe('auth:add', () => {
 
     await cmd.run()
 
-    const writeOptions = fsStub.writeJSON.firstCall.args[2]
-    expect(writeOptions.mode).to.equal(0o600)
+    expect(clearClientsStub.calledOnce).to.be.true
   })
 })

@@ -16,13 +16,14 @@ export default class PrList extends Command {
   static override flags = {
     page: Flags.integer({default: 1, description: 'Page number', required: false}),
     pagelen: Flags.integer({default: 10, description: 'Number of items per page', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     state: Flags.string({description: 'Filter by state (OPEN, MERGED, DECLINED, SUPERSEDED)', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrList)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }

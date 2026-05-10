@@ -18,6 +18,7 @@ export default class PrCreate extends Command {
   static override flags = {
     description: Flags.string({description: 'Pull request description', required: false}),
     destination: Flags.string({description: 'Destination branch name', required: true}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     reviewers: Flags.string({description: 'Comma-separated list of reviewer UUIDs', required: false}),
     source: Flags.string({description: 'Source branch name', required: true}),
     title: Flags.string({description: 'Pull request title', required: true}),
@@ -26,7 +27,7 @@ export default class PrCreate extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrCreate)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }

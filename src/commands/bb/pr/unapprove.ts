@@ -15,12 +15,13 @@ export default class PrUnapprove extends Command {
   static override description = 'Remove approval from a pull request'
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo 123']
   static override flags = {
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrUnapprove)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }

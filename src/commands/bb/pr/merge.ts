@@ -21,6 +21,7 @@ export default class PrMerge extends Command {
       required: false,
     }),
     message: Flags.string({char: 'm', description: 'Merge commit message', required: false}),
+    profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     strategy: Flags.string({
       description: 'Merge strategy (merge_commit, squash, fast_forward)',
       options: ['merge_commit', 'squash', 'fast_forward'],
@@ -31,7 +32,7 @@ export default class PrMerge extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrMerge)
-    const config = await readConfig(this.config.configDir, this.log.bind(this))
+    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
     if (!config) {
       return
     }
