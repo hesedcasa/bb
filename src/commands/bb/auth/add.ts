@@ -45,7 +45,7 @@ export default class AuthAdd extends Command {
     profiles[profileName] = {apiToken, ...(email && {email})}
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {auth: _auth, ...rest} = existing
-    await fs.writeJSON(configFilePath, {...rest, profiles}, {mode: 0o600})
+    await fs.outputJSON(configFilePath, {...rest, profiles}, {mode: 0o600})
 
     action.start('Authenticating')
     const result = await testConnection({apiToken, ...(email && {email})} as Config)

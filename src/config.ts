@@ -43,7 +43,7 @@ export async function setDefaultProfile(
   const cp = configPath(configDir)
   const raw = await fs.readJSON(cp)
   raw.defaultProfile = profile
-  await fs.writeJSON(cp, raw, {spaces: 2})
+  await fs.outputJSON(cp, raw, {spaces: 2})
   log(`Default profile set to '${profile}'`)
 }
 

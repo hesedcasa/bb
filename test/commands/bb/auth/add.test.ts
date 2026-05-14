@@ -18,8 +18,8 @@ describe('auth:add', () => {
     actionStartStub = stub()
     actionStopStub = stub()
     fsStub = {
+      outputJSON: stub().resolves(),
       readJSON: stub().rejects(new Error('ENOENT: no such file or directory')),
-      writeJSON: stub().resolves(),
     }
 
     const imported = await esmock('../../../../src/commands/bb/auth/add.js', {
@@ -45,8 +45,8 @@ describe('auth:add', () => {
 
     const result = await cmd.run()
 
-    expect(fsStub.writeJSON.calledOnce).to.be.true
-    const writtenData = fsStub.writeJSON.firstCall.args[1]
+    expect(fsStub.outputJSON.calledOnce).to.be.true
+    const writtenData = fsStub.outputJSON.firstCall.args[1]
     expect(writtenData.profiles.default.apiToken).to.equal('my-token')
     expect(writtenData.profiles.default.email).to.equal('user@test.com')
     expect(testConnectionStub.calledOnce).to.be.true
@@ -68,19 +68,19 @@ describe('auth:add', () => {
 
     await cmd.run()
 
-    const writeOptions = fsStub.writeJSON.firstCall.args[2]
+    const writeOptions = fsStub.outputJSON.firstCall.args[2]
     expect(writeOptions.mode).to.equal(0o600)
   })
 
   it('converts old-format auth to default profile before saving', async () => {
     let writtenData: any = null
 
-    fsStub.readJSON.resolves({
-      auth: {apiToken: 'existing-token', email: 'existing@test.com'},
-    })
-    fsStub.writeJSON.callsFake((_path: string, data: any) => {
+    fsStub.outputJSON.callsFake((_path: string, data: any) => {
       writtenData = data
       return Promise.resolve()
+    })
+    fsStub.readJSON.resolves({
+      auth: {apiToken: 'existing-token', email: 'existing@test.com'},
     })
 
     testConnectionStub.resolves({data: {}, success: true})
