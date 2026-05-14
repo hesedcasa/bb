@@ -22,8 +22,8 @@ describe('auth:update', () => {
     actionStartStub = stub()
     actionStopStub = stub()
     fsStub = {
+      outputJSON: stub().resolves(),
       readJSON: stub().resolves(existingConfig),
-      writeJSON: stub().resolves(),
     }
 
     const imported = await esmock('../../../../src/commands/bb/auth/update.js', {
@@ -51,8 +51,8 @@ describe('auth:update', () => {
     const result = await cmd.run()
 
     expect(confirmStub.calledOnce).to.be.true
-    expect(fsStub.writeJSON.calledOnce).to.be.true
-    const writtenData = fsStub.writeJSON.firstCall.args[1]
+    expect(fsStub.outputJSON.calledOnce).to.be.true
+    const writtenData = fsStub.outputJSON.firstCall.args[1]
     expect(writtenData.profiles.default.apiToken).to.equal('new-token')
     expect(writtenData.profiles.default.email).to.equal('new@test.com')
     expect(testConnectionStub.calledOnce).to.be.true
@@ -71,7 +71,7 @@ describe('auth:update', () => {
         work: {apiToken: 'old-work-token', email: 'work@test.com'},
       },
     })
-    fsStub.writeJSON.callsFake((_path: string, data: any) => {
+    fsStub.outputJSON.callsFake((_path: string, data: any) => {
       writtenData = data
       return Promise.resolve()
     })
@@ -115,7 +115,7 @@ describe('auth:update', () => {
 
     const result = await cmd.run()
 
-    expect(fsStub.writeJSON.called).to.be.false
+    expect(fsStub.outputJSON.called).to.be.false
     expect(testConnectionStub.called).to.be.false
     expect(result).to.be.undefined
   })
@@ -133,7 +133,7 @@ describe('auth:update', () => {
     await cmd.run()
 
     expect(logStub.calledWith('Run auth:add instead')).to.be.true
-    expect(fsStub.writeJSON.called).to.be.false
+    expect(fsStub.outputJSON.called).to.be.false
   })
 
   it('shows error message for other read errors', async () => {
@@ -149,7 +149,7 @@ describe('auth:update', () => {
     await cmd.run()
 
     expect(logStub.calledWith('Permission denied')).to.be.true
-    expect(fsStub.writeJSON.called).to.be.false
+    expect(fsStub.outputJSON.called).to.be.false
   })
 
   it('errors when updating a non-existent profile', async () => {
@@ -185,7 +185,7 @@ describe('auth:update', () => {
       expect(error.message).to.equal("Profile 'nonexistent' does not exist. Use auth:add to create it.")
     }
 
-    expect(fsStub.writeJSON.called).to.be.false
+    expect(fsStub.outputJSON.called).to.be.false
   })
 
   it('removes legacy auth block when updating config', async () => {
@@ -200,7 +200,7 @@ describe('auth:update', () => {
 
     await cmd.run()
 
-    const writtenData = fsStub.writeJSON.firstCall.args[1]
+    const writtenData = fsStub.outputJSON.firstCall.args[1]
     expect(writtenData.auth).to.be.undefined
     expect(writtenData.profiles.default.apiToken).to.equal('new-token')
   })

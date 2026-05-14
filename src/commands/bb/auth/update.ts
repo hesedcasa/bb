@@ -69,7 +69,7 @@ export default class AuthUpdate extends Command {
       profiles: {...profiles, [profileName]: {apiToken, ...(email && {email})}},
     }
 
-    await fs.writeJSON(configFilePath, updatedConfig, {mode: 0o600})
+    await fs.outputJSON(configFilePath, updatedConfig, {mode: 0o600})
 
     action.start('Authenticating')
     const result = await testConnection({apiToken, ...(email && {email})} as Config)

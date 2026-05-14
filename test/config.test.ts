@@ -26,7 +26,7 @@ describe('config', () => {
         },
       }
 
-      await fs.writeJSON(testConfigPath, testConfig)
+      await fs.outputJSON(testConfigPath, testConfig)
 
       const logMessages: string[] = []
       const result = await readConfig(testConfigDir, (msg) => logMessages.push(msg))
@@ -55,7 +55,7 @@ describe('config', () => {
     })
 
     it('reads profiles config with default profile', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         profiles: {
           default: {
             apiToken: 'default-token',
@@ -83,7 +83,7 @@ describe('config', () => {
     })
 
     it('reads profiles config with explicit profile name', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         profiles: {
           default: {
             apiToken: 'default-token',
@@ -111,7 +111,7 @@ describe('config', () => {
     })
 
     it('returns undefined for non-existent profile', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         profiles: {
           default: {
             apiToken: 'token',
@@ -129,7 +129,7 @@ describe('config', () => {
     })
 
     it('returns undefined for non-default profile on old-format config', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         auth: {
           apiToken: 'token',
           email: 'a@b.com',
@@ -145,7 +145,7 @@ describe('config', () => {
     })
 
     it('respects defaultProfile in config file when no profile arg given', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         defaultProfile: 'staging',
         profiles: {
           default: {
@@ -188,7 +188,7 @@ describe('config', () => {
 
   describe('readProfiles', () => {
     it('reads profiles from config', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         profiles: {
           default: {
             apiToken: 'token1',
@@ -213,7 +213,7 @@ describe('config', () => {
     })
 
     it('converts old-format config to default profile', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         auth: {
           apiToken: 'token',
           email: 'test@example.com',
@@ -245,7 +245,7 @@ describe('config', () => {
     })
 
     it('returns profile name from defaultProfile field in config', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         defaultProfile: 'work',
         profiles: {
           default: {apiToken: 'token', host: 'https://bitbucket.org'},
@@ -258,7 +258,7 @@ describe('config', () => {
     })
 
     it('returns "default" when defaultProfile field is missing', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         profiles: {
           default: {apiToken: 'token', host: 'https://bitbucket.org'},
         },
@@ -271,7 +271,7 @@ describe('config', () => {
 
   describe('setDefaultProfile', () => {
     it('sets the default profile in config file', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         profiles: {
           default: {apiToken: 'token', host: 'https://bitbucket.org'},
           work: {apiToken: 'token2', host: 'https://bitbucket.org'},
@@ -290,7 +290,7 @@ describe('config', () => {
     })
 
     it('logs error for non-existent profile', async () => {
-      await fs.writeJSON(testConfigPath, {
+      await fs.outputJSON(testConfigPath, {
         profiles: {
           default: {apiToken: 'token', host: 'https://bitbucket.org'},
         },
