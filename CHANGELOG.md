@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/hesedcasa/bb/compare/v0.5.0...v0.5.1) (2026-05-14)
+
+
+### 🛠️ Fixes
+
+* use outputJSON instead of writeJSON for config file operations ([#55](https://github.com/hesedcasa/bb/issues/55)) ([26d6b19](https://github.com/hesedcasa/bb/commit/26d6b19f1c220ee4212c4c192bfcb876caa507ec))
+
 ## [0.5.0](https://github.com/hesedcasa/bb/compare/v0.4.0...v0.5.0) (2026-05-10)
 
 
