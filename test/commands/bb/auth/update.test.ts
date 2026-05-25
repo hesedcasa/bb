@@ -15,6 +15,13 @@ describe('auth:update', () => {
 
   const existingConfig = {auth: {apiToken: 'old-token', email: 'old@test.com'}}
 
+  const createMockConfig = () => ({
+    bin: 'bb',
+    configDir: '/tmp/test-config',
+    root: process.cwd(),
+    runHook: stub().resolves({failures: [], successes: []}),
+  })
+
   beforeEach(async () => {
     testConnectionStub = stub()
     clearClientsStub = stub()
@@ -41,16 +48,11 @@ describe('auth:update', () => {
   it('updates config and shows success on valid auth', async () => {
     testConnectionStub.resolves({data: {username: 'user'}, success: true})
 
-    const cmd = new AuthUpdate(['-t', 'new-token', '-e', 'new@test.com'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new AuthUpdate(['-t', 'new-token', '-e', 'new@test.com'], createMockConfig() as any)
     const logStub = stub(cmd, 'log')
 
     const result = await cmd.run()
 
-    expect(confirmStub.calledOnce).to.be.true
     expect(fsStub.outputJSON.calledOnce).to.be.true
     const writtenData = fsStub.outputJSON.firstCall.args[1]
     expect(writtenData.profiles.default.apiToken).to.equal('new-token')
@@ -88,11 +90,7 @@ describe('auth:update', () => {
       'fs-extra': {default: fsStub},
     })
 
-    const cmd = new imported.default(['-t', 'new-work-token', '-e', 'new-work@test.com', '-p', 'work'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new imported.default(['-t', 'new-work-token', '-e', 'new-work@test.com', '-p', 'work'], createMockConfig() as any)
     const logStub = stub(cmd, 'log')
 
     const result = await cmd.run()
@@ -103,31 +101,23 @@ describe('auth:update', () => {
     expect(logStub.calledWith("Authentication for profile 'work' updated successfully")).to.be.true
   })
 
-  it('returns early when user declines confirmation', async () => {
+  it('proceeds without confirmation in non-interactive mode', async () => {
     confirmStub.resolves(false)
+    testConnectionStub.resolves({data: {}, success: true})
 
-    const cmd = new AuthUpdate(['-t', 'tok', '-e', 'e@e.com'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new AuthUpdate(['-t', 'tok', '-e', 'e@e.com'], createMockConfig() as any)
     stub(cmd, 'log')
 
     const result = await cmd.run()
 
-    expect(fsStub.outputJSON.called).to.be.false
-    expect(testConnectionStub.called).to.be.false
-    expect(result).to.be.undefined
+    expect(confirmStub.called).to.be.false
+    expect(result?.success).to.be.true
   })
 
   it('shows "Run auth:add" when config file not found', async () => {
     fsStub.readJSON.rejects(new Error('ENOENT: no such file or directory'))
 
-    const cmd = new AuthUpdate(['-t', 'tok', '-e', 'e@e.com'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new AuthUpdate(['-t', 'tok', '-e', 'e@e.com'], createMockConfig() as any)
     const logStub = stub(cmd, 'log')
 
     await cmd.run()
@@ -139,11 +129,7 @@ describe('auth:update', () => {
   it('shows error message for other read errors', async () => {
     fsStub.readJSON.rejects(new Error('Permission denied'))
 
-    const cmd = new AuthUpdate(['-t', 'tok', '-e', 'e@e.com'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new AuthUpdate(['-t', 'tok', '-e', 'e@e.com'], createMockConfig() as any)
     const logStub = stub(cmd, 'log')
 
     await cmd.run()
@@ -169,11 +155,7 @@ describe('auth:update', () => {
       'fs-extra': {default: fsStub},
     })
 
-    const cmd = new imported.default(['-t', 'tok', '-e', 'e@e.com', '-p', 'nonexistent'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new imported.default(['-t', 'tok', '-e', 'e@e.com', '-p', 'nonexistent'], createMockConfig() as any)
     stub(cmd, 'error').callsFake((msg: any) => {
       throw new Error(msg)
     })
@@ -182,7 +164,7 @@ describe('auth:update', () => {
       await cmd.run()
       expect.fail('should have thrown')
     } catch (error: any) {
-      expect(error.message).to.equal("Profile 'nonexistent' does not exist. Use auth:add to create it.")
+      expect(error.message).to.equal("Profile 'nonexistent' does not exist. Use 'bb auth add' to create it.")
     }
 
     expect(fsStub.outputJSON.called).to.be.false
@@ -191,11 +173,7 @@ describe('auth:update', () => {
   it('removes legacy auth block when updating config', async () => {
     testConnectionStub.resolves({data: {username: 'user'}, success: true})
 
-    const cmd = new AuthUpdate(['-t', 'new-token', '-e', 'new@test.com'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new AuthUpdate(['-t', 'new-token', '-e', 'new@test.com'], createMockConfig() as any)
     stub(cmd, 'log')
 
     await cmd.run()
@@ -208,17 +186,13 @@ describe('auth:update', () => {
   it('shows error on failed auth test after update', async () => {
     testConnectionStub.resolves({error: 'Unauthorized', success: false})
 
-    const cmd = new AuthUpdate(['-t', 'bad', '-e', 'e@e.com'], {
-      configDir: '/tmp/test-config',
-      root: process.cwd(),
-      runHook: stub().resolves({failures: [], successes: []}),
-    } as any)
+    const cmd = new AuthUpdate(['-t', 'bad', '-e', 'e@e.com'], createMockConfig() as any)
     stub(cmd, 'log')
     const errorStub = stub(cmd, 'error')
 
     await cmd.run()
 
     expect(actionStopStub.calledWith('✗ failed')).to.be.true
-    expect(errorStub.calledWith('Authentication is invalid. Please check your email, API Token, and URL.')).to.be.true
+    expect(errorStub.calledWith('Authentication is invalid. Please check your credentials.')).to.be.true
   })
 })

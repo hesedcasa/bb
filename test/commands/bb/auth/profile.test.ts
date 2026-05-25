@@ -2,9 +2,10 @@
 /* eslint-disable new-cap */
 import {expect} from 'chai'
 import esmock from 'esmock'
-import {stub} from 'sinon'
+import {type SinonStub, stub} from 'sinon'
 
 const createMockConfig = () => ({
+  bin: 'bb',
   configDir: '/tmp/test-config',
   root: process.cwd(),
   runHook: stub().resolves({failures: [], successes: []}),
@@ -12,21 +13,25 @@ const createMockConfig = () => ({
 
 describe('auth:profile', () => {
   let AuthProfile: any
-  let mockGetDefaultProfile: any
-  let mockSetDefaultProfile: any
+  let fsStub: Record<string, SinonStub>
   let logOutput: string[]
 
   beforeEach(async () => {
     logOutput = []
 
-    mockGetDefaultProfile = async () => 'default'
-    mockSetDefaultProfile = async () => {}
+    fsStub = {
+      outputJSON: stub().resolves(),
+      readJSON: stub().resolves({
+        defaultProfile: 'default',
+        profiles: {
+          default: {apiToken: 'default-token', host: 'https://bitbucket.org'},
+          work: {apiToken: 'work-token', host: 'https://bitbucket.org'},
+        },
+      }),
+    }
 
     AuthProfile = await esmock('../../../../src/commands/bb/auth/profile.js', {
-      '../../../../src/config.js': {
-        getDefaultProfile: mockGetDefaultProfile,
-        setDefaultProfile: mockSetDefaultProfile,
-      },
+      'fs-extra': {default: fsStub},
     })
   })
 
@@ -43,52 +48,27 @@ describe('auth:profile', () => {
   })
 
   it('sets default profile with --default flag', async () => {
-    let setProfileCalled = false
-    let setProfileName = ''
-
-    mockSetDefaultProfile = async (_dir: string, profile: string, _log: any) => {
-      setProfileCalled = true
-      setProfileName = profile
-    }
-
-    AuthProfile = await esmock('../../../../src/commands/bb/auth/profile.js', {
-      '../../../../src/config.js': {
-        getDefaultProfile: mockGetDefaultProfile,
-        setDefaultProfile: mockSetDefaultProfile,
-      },
-    })
-
     const command = new AuthProfile.default(['--default', 'work'], createMockConfig())
 
-    command.log = () => {}
+    command.log = (output: string) => {
+      logOutput.push(output)
+    }
 
     await command.run()
 
-    expect(setProfileCalled).to.be.true
-    expect(setProfileName).to.equal('work')
+    expect(fsStub.outputJSON.calledOnce).to.be.true
+    const writtenData = fsStub.outputJSON.firstCall.args[1]
+    expect(writtenData.defaultProfile).to.equal('work')
+    expect(logOutput).to.include("Default profile set to 'work'")
   })
 
-  it('does not call getDefaultProfile when setting default', async () => {
-    let getCalled = false
-
-    mockGetDefaultProfile = async () => {
-      getCalled = true
-      return 'default'
-    }
-
-    AuthProfile = await esmock('../../../../src/commands/bb/auth/profile.js', {
-      '../../../../src/config.js': {
-        getDefaultProfile: mockGetDefaultProfile,
-        setDefaultProfile: mockSetDefaultProfile,
-      },
-    })
-
-    const command = new AuthProfile.default(['--default', 'work'], createMockConfig())
+  it('does not call outputJSON when showing default profile', async () => {
+    const command = new AuthProfile.default([], createMockConfig())
 
     command.log = () => {}
 
     await command.run()
 
-    expect(getCalled).to.be.false
+    expect(fsStub.outputJSON.called).to.be.false
   })
 })

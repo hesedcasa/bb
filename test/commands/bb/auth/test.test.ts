@@ -6,18 +6,22 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('auth:test', () => {
   let AuthTest: any
-  let readConfigStub: SinonStub
+  let fsStub: Record<string, SinonStub>
   let testConnectionStub: SinonStub
   let clearClientsStub: SinonStub
   let actionStartStub: SinonStub
   let actionStopStub: SinonStub
 
-  const mockConfig = {
-    auth: {apiToken: 'test-token', email: 'test@example.com', host: 'https://bitbucket.org'},
+  const mockProfileData = {
+    profiles: {
+      default: {apiToken: 'test-token', email: 'test@example.com', host: 'https://bitbucket.org'},
+    },
   }
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    fsStub = {
+      readJSON: stub().resolves(mockProfileData),
+    }
     testConnectionStub = stub()
     clearClientsStub = stub()
     actionStartStub = stub()
@@ -28,8 +32,8 @@ describe('auth:test', () => {
         clearClients: clearClientsStub,
         testConnection: testConnectionStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
       '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
+      'fs-extra': {default: fsStub},
     })
     AuthTest = imported.default
   })
@@ -38,6 +42,8 @@ describe('auth:test', () => {
     testConnectionStub.resolves({data: {username: 'user'}, success: true})
 
     const cmd = new AuthTest([], {
+      bin: 'bb',
+      configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -45,40 +51,34 @@ describe('auth:test', () => {
 
     const result = await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
-    expect(testConnectionStub.calledWith(mockConfig.auth)).to.be.true
+    expect(testConnectionStub.calledWith(mockProfileData.profiles.default)).to.be.true
     expect(clearClientsStub.calledOnce).to.be.true
     expect(actionStopStub.calledWith('✓ successful')).to.be.true
     expect(logStub.calledWith('Successful connection to Bitbucket')).to.be.true
     expect(result.success).to.be.true
   })
 
-  it('passes profile flag to readConfig', async () => {
-    let receivedProfile: string | undefined
-
-    readConfigStub.callsFake(async (_dir: string, _log: any, profile?: string) => {
-      receivedProfile = profile
-      return {
-        auth: {
-          apiToken: 'work-token',
-          email: 'work@example.com',
-          host: 'https://bitbucket.org',
-        },
-      }
+  it('uses correct profile when --profile flag is given', async () => {
+    fsStub.readJSON.resolves({
+      profiles: {
+        default: {apiToken: 'default-token', host: 'https://bitbucket.org'},
+        work: {apiToken: 'work-token', email: 'work@example.com', host: 'https://bitbucket.org'},
+      },
     })
+    testConnectionStub.resolves({data: {}, success: true})
 
     const imported = await esmock('../../../../src/commands/bb/auth/test.js', {
       '../../../../src/bitbucket/bitbucket-client.js': {
         clearClients: clearClientsStub,
         testConnection: testConnectionStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
       '@oclif/core/ux': {action: {start: actionStartStub, stop: actionStopStub}},
+      'fs-extra': {default: fsStub},
     })
 
-    testConnectionStub.resolves({data: {}, success: true})
-
     const cmd = new imported.default(['--profile', 'work'], {
+      bin: 'bb',
+      configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -86,13 +86,15 @@ describe('auth:test', () => {
 
     await cmd.run()
 
-    expect(receivedProfile).to.equal('work')
+    expect(testConnectionStub.firstCall.args[0].apiToken).to.equal('work-token')
   })
 
   it('shows error on failed connection', async () => {
     testConnectionStub.resolves({error: 'Unauthorized', success: false})
 
     const cmd = new AuthTest([], {
+      bin: 'bb',
+      configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -105,19 +107,26 @@ describe('auth:test', () => {
     expect(errorStub.calledWith('Failed to connect to Bitbucket.')).to.be.true
   })
 
-  it('returns error result when config is missing', async () => {
-    readConfigStub.resolves(null)
+  it('throws error when config is missing', async () => {
+    fsStub.readJSON.rejects(Object.assign(new Error('ENOENT: no such file or directory'), {code: 'ENOENT'}))
 
     const cmd = new AuthTest([], {
+      bin: 'bb',
+      configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
     stub(cmd, 'log')
+    const errorStub = stub(cmd, 'error').throws()
 
-    const result = await cmd.run()
+    try {
+      await cmd.run()
+    } catch {
+      // Expected
+    }
 
-    expect(result.success).to.be.false
-    expect(result.error).to.equal('Missing authentication config')
+    expect(errorStub.calledOnce).to.be.true
+    expect(errorStub.firstCall.args[0]).to.include('Missing authentication config')
     expect(testConnectionStub.called).to.be.false
   })
 })

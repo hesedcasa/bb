@@ -37,6 +37,7 @@ describe('auth:add', () => {
     testConnectionStub.resolves({data: {username: 'user'}, success: true})
 
     const cmd = new AuthAdd(['-t', 'my-token', '-e', 'user@test.com', '-p', 'default'], {
+      bin: 'bb',
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -60,6 +61,7 @@ describe('auth:add', () => {
     testConnectionStub.resolves({data: {}, success: true})
 
     const cmd = new AuthAdd(['-t', 'tok', '-e', 'e@e.com', '-p', 'default'], {
+      bin: 'bb',
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -95,6 +97,7 @@ describe('auth:add', () => {
     })
 
     const cmd = new imported.default(['-t', 'new-token', '-e', 'new@test.com', '-p', 'work'], {
+      bin: 'bb',
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -131,6 +134,7 @@ describe('auth:add', () => {
     })
 
     const cmd = new imported.default(['-t', 'new-token', '-e', 'new@test.com', '-p', 'default'], {
+      bin: 'bb',
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -167,6 +171,7 @@ describe('auth:add', () => {
     })
 
     const cmd = new imported.default(['-t', 'new-token', '-e', 'new@test.com', '-p', 'default'], {
+      bin: 'bb',
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -192,6 +197,7 @@ describe('auth:add', () => {
     testConnectionStub.resolves({error: 'Unauthorized', success: false})
 
     const cmd = new AuthAdd(['-t', 'bad', '-e', 'e@e.com', '-p', 'work'], {
+      bin: 'bb',
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
@@ -202,13 +208,14 @@ describe('auth:add', () => {
     await cmd.run()
 
     expect(actionStopStub.calledWith('✗ failed')).to.be.true
-    expect(errorStub.calledWith('Authentication is invalid. Please check your email, API Token, and URL.')).to.be.true
+    expect(errorStub.calledWith('Authentication is invalid. Please check your credentials.')).to.be.true
   })
 
   it('calls clearClients after execution', async () => {
     testConnectionStub.resolves({data: {}, success: true})
 
     const cmd = new AuthAdd(['-t', 'tok', '-e', 'e@e.com', '-p', 'work'], {
+      bin: 'bb',
       configDir: '/tmp/test-config',
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),

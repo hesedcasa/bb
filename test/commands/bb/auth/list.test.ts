@@ -2,9 +2,10 @@
 /* eslint-disable new-cap */
 import {expect} from 'chai'
 import esmock from 'esmock'
-import {stub} from 'sinon'
+import {type SinonStub, stub} from 'sinon'
 
 const createMockConfig = () => ({
+  bin: 'bb',
   configDir: '/tmp/test-config',
   root: process.cwd(),
   runHook: stub().resolves({failures: [], successes: []}),
@@ -12,32 +13,30 @@ const createMockConfig = () => ({
 
 describe('auth:list', () => {
   let AuthList: any
-  let mockReadProfiles: any
-  let mockGetDefaultProfile: any
+  let fsStub: Record<string, SinonStub>
   let logOutput: string[]
 
   beforeEach(async () => {
     logOutput = []
 
-    mockReadProfiles = async () => ({
-      default: {
-        apiToken: 'default-token-value',
-        email: 'default@example.com',
-        host: 'https://bitbucket.org',
-      },
-      work: {
-        apiToken: 'work-token-value',
-        host: 'https://bitbucket.org',
-      },
-    })
-
-    mockGetDefaultProfile = async () => 'default'
+    fsStub = {
+      readJSON: stub().resolves({
+        profiles: {
+          default: {
+            apiToken: 'default-token-value',
+            email: 'default@example.com',
+            host: 'https://bitbucket.org',
+          },
+          work: {
+            apiToken: 'work-token-value',
+            host: 'https://bitbucket.org',
+          },
+        },
+      }),
+    }
 
     AuthList = await esmock('../../../../src/commands/bb/auth/list.js', {
-      '../../../../src/config.js': {
-        getDefaultProfile: mockGetDefaultProfile,
-        readProfiles: mockReadProfiles,
-      },
+      'fs-extra': {default: fsStub},
     })
   })
 
@@ -71,13 +70,10 @@ describe('auth:list', () => {
   })
 
   it('shows message when no profiles exist', async () => {
-    mockReadProfiles = async () => null
+    fsStub.readJSON.rejects(Object.assign(new Error('ENOENT: no such file or directory'), {code: 'ENOENT'}))
 
     AuthList = await esmock('../../../../src/commands/bb/auth/list.js', {
-      '../../../../src/config.js': {
-        getDefaultProfile: mockGetDefaultProfile,
-        readProfiles: mockReadProfiles,
-      },
+      'fs-extra': {default: fsStub},
     })
 
     const command = new AuthList.default([], createMockConfig())
@@ -93,13 +89,10 @@ describe('auth:list', () => {
   })
 
   it('returns empty profiles when readProfiles returns empty object', async () => {
-    mockReadProfiles = async () => ({})
+    fsStub.readJSON.resolves({})
 
     AuthList = await esmock('../../../../src/commands/bb/auth/list.js', {
-      '../../../../src/config.js': {
-        getDefaultProfile: mockGetDefaultProfile,
-        readProfiles: mockReadProfiles,
-      },
+      'fs-extra': {default: fsStub},
     })
 
     const command = new AuthList.default([], createMockConfig())
