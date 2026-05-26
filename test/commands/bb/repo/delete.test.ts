@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('repo:delete', () => {
   let RepoDelete: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let deleteRepositoryStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     deleteRepositoryStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,8 +29,7 @@ describe('repo:delete', () => {
         clearClients: clearClientsStub,
         deleteRepository: deleteRepositoryStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     RepoDelete = imported.default
   })
@@ -46,16 +43,16 @@ describe('repo:delete', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(deleteRepositoryStub.calledOnce).to.be.true
-    expect(deleteRepositoryStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo'])
+    expect(deleteRepositoryStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new RepoDelete(['my-ws', 'my-repo'], {
       root: process.cwd(),
@@ -65,7 +62,7 @@ describe('repo:delete', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(deleteRepositoryStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -81,7 +78,7 @@ describe('repo:delete', () => {
     await cmd.run()
 
     expect(deleteRepositoryStub.calledOnce).to.be.true
-    expect(deleteRepositoryStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo'])
+    expect(deleteRepositoryStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

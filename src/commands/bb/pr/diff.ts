@@ -1,7 +1,7 @@
+import {createProfileManager} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, getPullRequestDiff} from '../../../bitbucket/bitbucket-client.js'
-import {readConfig} from '../../../config.js'
 
 export default class PrDiff extends Command {
   /* eslint-disable perfectionist/sort-objects */
@@ -19,12 +19,13 @@ export default class PrDiff extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrDiff)
-    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
-    if (!config) {
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const auth = await loadAuthConfig()
+    if (!auth) {
       return
     }
 
-    const result = await getPullRequestDiff(config.auth, args.workspace, args.repoSlug, args.pullRequestId)
+    const result = await getPullRequestDiff(auth, args.workspace, args.repoSlug, args.pullRequestId)
     clearClients()
 
     if (result.success) {

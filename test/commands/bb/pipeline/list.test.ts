@@ -5,17 +5,15 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pipeline:list', () => {
   let PipelineList: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let listPipelinesStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {
@@ -24,7 +22,7 @@ describe('pipeline:list', () => {
   }
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     listPipelinesStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -34,8 +32,7 @@ describe('pipeline:list', () => {
         clearClients: clearClientsStub,
         listPipelines: listPipelinesStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PipelineList = imported.default
   })
@@ -49,9 +46,9 @@ describe('pipeline:list', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listPipelinesStub.calledOnce).to.be.true
-    expect(listPipelinesStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 1, 10, undefined])
+    expect(listPipelinesStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 1, 10, undefined])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
@@ -67,13 +64,13 @@ describe('pipeline:list', () => {
     await cmd.run()
 
     expect(listPipelinesStub.calledOnce).to.be.true
-    expect(listPipelinesStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 3, 25, 'created_on'])
+    expect(listPipelinesStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 3, 25, 'created_on'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PipelineList(['my-ws', 'my-repo'], {
       root: process.cwd(),
@@ -83,7 +80,7 @@ describe('pipeline:list', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listPipelinesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -99,7 +96,7 @@ describe('pipeline:list', () => {
     await cmd.run()
 
     expect(listPipelinesStub.calledOnce).to.be.true
-    expect(listPipelinesStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 1, 10, undefined])
+    expect(listPipelinesStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 1, 10, undefined])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pr:diff', () => {
   let PrDiff: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let getPullRequestDiffStub: SinonStub
   let clearClientsStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockDiff = 'diff --git a/file.ts b/file.ts\n--- a/file.ts\n+++ b/file.ts\n@@ -1 +1 @@\n-old\n+new\n'
   const mockResult = {data: mockDiff, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     getPullRequestDiffStub = stub().resolves(mockResult)
     clearClientsStub = stub()
 
@@ -30,7 +28,7 @@ describe('pr:diff', () => {
         clearClients: clearClientsStub,
         getPullRequestDiff: getPullRequestDiffStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
     })
     PrDiff = imported.default
   })
@@ -44,15 +42,15 @@ describe('pr:diff', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getPullRequestDiffStub.calledOnce).to.be.true
-    expect(getPullRequestDiffStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 123])
+    expect(getPullRequestDiffStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 123])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logStub.calledOnceWith(mockDiff)).to.be.true
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PrDiff(['my-ws', 'my-repo', '123'], {
       root: process.cwd(),
@@ -62,7 +60,7 @@ describe('pr:diff', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getPullRequestDiffStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logStub.called).to.be.false

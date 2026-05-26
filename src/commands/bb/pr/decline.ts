@@ -1,8 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, declinePullRequest} from '../../../bitbucket/bitbucket-client.js'
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
 
 export default class PrDecline extends Command {
   /* eslint-disable perfectionist/sort-objects */
@@ -21,12 +20,13 @@ export default class PrDecline extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrDecline)
-    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
-    if (!config) {
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const auth = await loadAuthConfig()
+    if (!auth) {
       return
     }
 
-    const result = await declinePullRequest(config.auth, args.workspace, args.repoSlug, args.pullRequestId)
+    const result = await declinePullRequest(auth, args.workspace, args.repoSlug, args.pullRequestId)
     clearClients()
 
     if (flags.toon) {

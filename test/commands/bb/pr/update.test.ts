@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pr:update', () => {
   let PrUpdate: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let updatePullRequestStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {id: 42, title: 'Updated title'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     updatePullRequestStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,8 +29,7 @@ describe('pr:update', () => {
         clearClients: clearClientsStub,
         updatePullRequest: updatePullRequestStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PrUpdate = imported.default
   })
@@ -46,10 +43,10 @@ describe('pr:update', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(updatePullRequestStub.calledOnce).to.be.true
     expect(updatePullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       42,
@@ -71,7 +68,7 @@ describe('pr:update', () => {
 
     expect(updatePullRequestStub.calledOnce).to.be.true
     expect(updatePullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       42,
@@ -91,13 +88,13 @@ describe('pr:update', () => {
     await cmd.run()
 
     expect(updatePullRequestStub.calledOnce).to.be.true
-    expect(updatePullRequestStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 42, {}])
+    expect(updatePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, {}])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PrUpdate(['my-ws', 'my-repo', '42', '--title', 'Updated title'], {
       root: process.cwd(),
@@ -107,7 +104,7 @@ describe('pr:update', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(updatePullRequestStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -124,7 +121,7 @@ describe('pr:update', () => {
 
     expect(updatePullRequestStub.calledOnce).to.be.true
     expect(updatePullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       42,

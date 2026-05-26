@@ -1,8 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Command, Flags} from '@oclif/core'
 
 import {clearClients, listWorkspaces} from '../../../bitbucket/bitbucket-client.js'
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
 
 export default class WorkspaceList extends Command {
   static override args = {}
@@ -17,12 +16,13 @@ export default class WorkspaceList extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(WorkspaceList)
-    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
-    if (!config) {
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const auth = await loadAuthConfig()
+    if (!auth) {
       return
     }
 
-    const result = await listWorkspaces(config.auth, flags.page, flags.pagelen)
+    const result = await listWorkspaces(auth, flags.page, flags.pagelen)
     clearClients()
 
     if (flags.toon) {

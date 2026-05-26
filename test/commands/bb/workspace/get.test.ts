@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('workspace:get', () => {
   let WorkspaceGet: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let getWorkspaceStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {name: 'My Workspace', slug: 'my-workspace'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     getWorkspaceStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,8 +29,7 @@ describe('workspace:get', () => {
         clearClients: clearClientsStub,
         getWorkspace: getWorkspaceStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     WorkspaceGet = imported.default
   })
@@ -44,16 +41,16 @@ describe('workspace:get', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getWorkspaceStub.calledOnce).to.be.true
-    expect(getWorkspaceStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-workspace'])
+    expect(getWorkspaceStub.firstCall.args).to.deep.equal([mockAuth, 'my-workspace'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const oclifConfig = {root: process.cwd(), runHook: stub().resolves({failures: [], successes: []})} as any
     const cmd = new WorkspaceGet(['my-workspace'], oclifConfig)
@@ -61,7 +58,7 @@ describe('workspace:get', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getWorkspaceStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -75,7 +72,7 @@ describe('workspace:get', () => {
     await cmd.run()
 
     expect(getWorkspaceStub.calledOnce).to.be.true
-    expect(getWorkspaceStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-workspace'])
+    expect(getWorkspaceStub.firstCall.args).to.deep.equal([mockAuth, 'my-workspace'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

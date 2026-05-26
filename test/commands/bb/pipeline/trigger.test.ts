@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pipeline:trigger', () => {
   let PipelineTrigger: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let triggerPipelineStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {state: {name: 'PENDING'}, uuid: '{triggered-pipe}'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     triggerPipelineStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,8 +29,7 @@ describe('pipeline:trigger', () => {
         clearClients: clearClientsStub,
         triggerPipeline: triggerPipelineStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PipelineTrigger = imported.default
   })
@@ -46,10 +43,10 @@ describe('pipeline:trigger', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(triggerPipelineStub.calledOnce).to.be.true
     expect(triggerPipelineStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       {refName: 'main', refType: 'branch'},
@@ -70,7 +67,7 @@ describe('pipeline:trigger', () => {
 
     expect(triggerPipelineStub.calledOnce).to.be.true
     expect(triggerPipelineStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       {refName: 'main', refType: 'branch', selector: {pattern: 'my-pipeline', type: 'custom'}},
@@ -80,7 +77,7 @@ describe('pipeline:trigger', () => {
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PipelineTrigger(['my-ws', 'my-repo', '--branch', 'main'], {
       root: process.cwd(),
@@ -90,7 +87,7 @@ describe('pipeline:trigger', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(triggerPipelineStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -107,7 +104,7 @@ describe('pipeline:trigger', () => {
 
     expect(triggerPipelineStub.calledOnce).to.be.true
     expect(triggerPipelineStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       {refName: 'main', refType: 'branch'},

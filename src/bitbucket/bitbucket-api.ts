@@ -1,26 +1,13 @@
-/**
- * Generic API result
- */
-export interface ApiResult {
-  data?: unknown
-  error?: unknown
-  success: boolean
-}
-
-export interface Config {
-  apiToken: string
-  email?: string
-  host: string
-}
+import {type ApiResult, type AuthConfig, buildAuthHeader} from '@hesed/plugin-lib'
 
 /**
  * Bitbucket API Utility Module
  * Provides core Bitbucket REST API operations
  */
 export class BitbucketApi {
-  private config: Config
+  private config: AuthConfig
 
-  constructor(config: Config) {
+  constructor(config: AuthConfig) {
     this.config = config
   }
 
@@ -351,12 +338,7 @@ export class BitbucketApi {
    * Build authorization header
    */
   private getAuthHeader(): string {
-    if (this.config.email) {
-      const authString = Buffer.from(`${this.config.email}:${this.config.apiToken}`).toString('base64')
-      return `Basic ${authString}`
-    }
-
-    return `Bearer ${this.config.apiToken}`
+    return buildAuthHeader(this.config)
   }
 
   /**

@@ -1,8 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, listPipelines} from '../../../bitbucket/bitbucket-client.js'
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
 
 export default class PipelineList extends Command {
   /* eslint-disable perfectionist/sort-objects */
@@ -23,19 +22,13 @@ export default class PipelineList extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PipelineList)
-    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
-    if (!config) {
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const auth = await loadAuthConfig()
+    if (!auth) {
       return
     }
 
-    const result = await listPipelines(
-      config.auth,
-      args.workspace,
-      args.repoSlug,
-      flags.page,
-      flags.pagelen,
-      flags.sort,
-    )
+    const result = await listPipelines(auth, args.workspace, args.repoSlug, flags.page, flags.pagelen, flags.sort)
     clearClients()
 
     if (flags.toon) {

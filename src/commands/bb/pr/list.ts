@@ -1,8 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, listPullRequests} from '../../../bitbucket/bitbucket-client.js'
-import {readConfig} from '../../../config.js'
-import {formatAsToon} from '../../../format.js'
 
 export default class PrList extends Command {
   /* eslint-disable perfectionist/sort-objects */
@@ -23,19 +22,13 @@ export default class PrList extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrList)
-    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
-    if (!config) {
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const auth = await loadAuthConfig()
+    if (!auth) {
       return
     }
 
-    const result = await listPullRequests(
-      config.auth,
-      args.workspace,
-      args.repoSlug,
-      flags.state,
-      flags.page,
-      flags.pagelen,
-    )
+    const result = await listPullRequests(auth, args.workspace, args.repoSlug, flags.state, flags.page, flags.pagelen)
     clearClients()
 
     if (flags.toon) {

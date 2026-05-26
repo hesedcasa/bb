@@ -5,17 +5,15 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('workspace:list', () => {
   let WorkspaceList: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let listWorkspacesStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {
@@ -24,7 +22,7 @@ describe('workspace:list', () => {
   }
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     listWorkspacesStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -34,8 +32,7 @@ describe('workspace:list', () => {
         clearClients: clearClientsStub,
         listWorkspaces: listWorkspacesStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     WorkspaceList = imported.default
   })
@@ -47,16 +44,16 @@ describe('workspace:list', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listWorkspacesStub.calledOnce).to.be.true
-    expect(listWorkspacesStub.firstCall.args).to.deep.equal([mockConfig.auth, 1, 10])
+    expect(listWorkspacesStub.firstCall.args).to.deep.equal([mockAuth, 1, 10])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const oclifConfig = {root: process.cwd(), runHook: stub().resolves({failures: [], successes: []})} as any
     const cmd = new WorkspaceList([], oclifConfig)
@@ -64,7 +61,7 @@ describe('workspace:list', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listWorkspacesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -78,7 +75,7 @@ describe('workspace:list', () => {
     await cmd.run()
 
     expect(listWorkspacesStub.calledOnce).to.be.true
-    expect(listWorkspacesStub.firstCall.args).to.deep.equal([mockConfig.auth, 1, 10])
+    expect(listWorkspacesStub.firstCall.args).to.deep.equal([mockAuth, 1, 10])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)
