@@ -1,8 +1,8 @@
 import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, updatePullRequest} from '../../../bitbucket/bitbucket-client.js'
-import {readConfig} from '../../../config.js'
 import {formatAsToon} from '../../../format.js'
+import {createProfileManager} from '@hesed/plugin-lib'
 
 export default class PrUpdate extends Command {
   /* eslint-disable perfectionist/sort-objects */
@@ -23,8 +23,9 @@ export default class PrUpdate extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrUpdate)
-    const config = await readConfig(this.config.configDir, this.log.bind(this), flags.profile)
-    if (!config) {
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const auth = await loadAuthConfig()
+    if (!auth) {
       return
     }
 
@@ -33,7 +34,7 @@ export default class PrUpdate extends Command {
     // eslint-disable-next-line unicorn/prefer-string-replace-all
     if (flags.description) fields.description = flags.description.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
 
-    const result = await updatePullRequest(config.auth, args.workspace, args.repoSlug, args.pullRequestId, fields)
+    const result = await updatePullRequest(auth, args.workspace, args.repoSlug, args.pullRequestId, fields)
     clearClients()
 
     if (flags.toon) {
