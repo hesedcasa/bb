@@ -29,8 +29,7 @@ describe('pr:unapprove', () => {
         clearClients: clearClientsStub,
         unapprovePullRequest: unapprovePullRequestStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PrUnapprove = imported.default
   })

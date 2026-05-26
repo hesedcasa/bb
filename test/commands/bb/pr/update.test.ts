@@ -29,8 +29,7 @@ describe('pr:update', () => {
         clearClients: clearClientsStub,
         updatePullRequest: updatePullRequestStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PrUpdate = imported.default
   })

@@ -29,8 +29,7 @@ describe('pipeline:trigger', () => {
         clearClients: clearClientsStub,
         triggerPipeline: triggerPipelineStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PipelineTrigger = imported.default
   })

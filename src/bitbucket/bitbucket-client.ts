@@ -90,7 +90,16 @@ export async function createPullRequest(
   autoAddReviewers = true,
 ): Promise<ApiResult> {
   const bb = await getClient(config)
-  return bb.createPullRequest(workspace, repoSlug, title, sourceBranch, destinationBranch, description, reviewers, autoAddReviewers)
+  return bb.createPullRequest(
+    workspace,
+    repoSlug,
+    title,
+    sourceBranch,
+    destinationBranch,
+    description,
+    reviewers,
+    autoAddReviewers,
+  )
 }
 
 // eslint-disable-next-line max-params

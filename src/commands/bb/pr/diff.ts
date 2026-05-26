@@ -1,7 +1,7 @@
+import {createProfileManager} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, getPullRequestDiff} from '../../../bitbucket/bitbucket-client.js'
-import {createProfileManager} from '@hesed/plugin-lib'
 
 export default class PrDiff extends Command {
   /* eslint-disable perfectionist/sort-objects */

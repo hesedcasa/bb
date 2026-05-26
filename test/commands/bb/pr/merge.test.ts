@@ -29,8 +29,7 @@ describe('pr:merge', () => {
         clearClients: clearClientsStub,
         mergePullRequest: mergePullRequestStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PrMerge = imported.default
   })

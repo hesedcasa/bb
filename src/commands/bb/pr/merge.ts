@@ -1,8 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Args, Command, Flags} from '@oclif/core'
 
 import {clearClients, mergePullRequest} from '../../../bitbucket/bitbucket-client.js'
-import {formatAsToon} from '../../../format.js'
-import {createProfileManager} from '@hesed/plugin-lib'
 
 export default class PrMerge extends Command {
   /* eslint-disable perfectionist/sort-objects */

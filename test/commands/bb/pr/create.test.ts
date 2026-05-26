@@ -29,8 +29,7 @@ describe('pr:create', () => {
         clearClients: clearClientsStub,
         createPullRequest: createPullRequestStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PrCreate = imported.default
   })

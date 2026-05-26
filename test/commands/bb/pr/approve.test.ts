@@ -29,8 +29,7 @@ describe('pr:approve', () => {
         approvePullRequest: approvePullRequestStub,
         clearClients: clearClientsStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PrApprove = imported.default
   })

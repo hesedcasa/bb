@@ -30,8 +30,7 @@ describe('repo:create', () => {
         clearClients: clearClientsStub,
         createRepository: createRepositoryStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     RepoCreate = imported.default
   })

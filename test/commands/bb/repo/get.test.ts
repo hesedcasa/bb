@@ -30,8 +30,7 @@ describe('repo:get', () => {
         clearClients: clearClientsStub,
         getRepository: getRepositoryStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     RepoGet = imported.default
   })

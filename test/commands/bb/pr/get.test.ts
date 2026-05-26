@@ -29,8 +29,7 @@ describe('pr:get', () => {
         clearClients: clearClientsStub,
         getPullRequest: getPullRequestStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PrGet = imported.default
   })

@@ -32,8 +32,7 @@ describe('workspace:list', () => {
         clearClients: clearClientsStub,
         listWorkspaces: listWorkspacesStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     WorkspaceList = imported.default
   })

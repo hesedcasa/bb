@@ -1,8 +1,7 @@
+import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
 import {Command, Flags} from '@oclif/core'
 
 import {clearClients, listWorkspaces} from '../../../bitbucket/bitbucket-client.js'
-import {formatAsToon} from '../../../format.js'
-import {createProfileManager} from '@hesed/plugin-lib'
 
 export default class WorkspaceList extends Command {
   static override args = {}

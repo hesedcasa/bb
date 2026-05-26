@@ -29,8 +29,7 @@ describe('repo:delete', () => {
         clearClients: clearClientsStub,
         deleteRepository: deleteRepositoryStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     RepoDelete = imported.default
   })

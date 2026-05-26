@@ -32,8 +32,7 @@ describe('pipeline:list', () => {
         clearClients: clearClientsStub,
         listPipelines: listPipelinesStub,
       },
-      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
-      '../../../../src/format.js': {formatAsToon: formatAsToonStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
     PipelineList = imported.default
   })
