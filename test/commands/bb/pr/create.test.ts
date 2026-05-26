@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pr:create', () => {
   let PrCreate: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let createPullRequestStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {id: 1, title: 'My PR'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     createPullRequestStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,7 +29,7 @@ describe('pr:create', () => {
         clearClients: clearClientsStub,
         createPullRequest: createPullRequestStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
     })
     PrCreate = imported.default
@@ -46,10 +44,10 @@ describe('pr:create', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(createPullRequestStub.calledOnce).to.be.true
     expect(createPullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       'My PR',
@@ -88,7 +86,7 @@ describe('pr:create', () => {
 
     expect(createPullRequestStub.calledOnce).to.be.true
     expect(createPullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       'My PR',
@@ -103,7 +101,7 @@ describe('pr:create', () => {
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PrCreate(['my-ws', 'my-repo', '--title', 'My PR', '--source', 'feature', '--destination', 'main'], {
       root: process.cwd(),
@@ -113,7 +111,7 @@ describe('pr:create', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(createPullRequestStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false

@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pr:decline', () => {
   let PrDecline: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let declinePullRequestStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {state: 'DECLINED'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     declinePullRequestStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,7 +29,7 @@ describe('pr:decline', () => {
         clearClients: clearClientsStub,
         declinePullRequest: declinePullRequestStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
     })
     PrDecline = imported.default
@@ -46,16 +44,16 @@ describe('pr:decline', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(declinePullRequestStub.calledOnce).to.be.true
-    expect(declinePullRequestStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 42])
+    expect(declinePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PrDecline(['my-ws', 'my-repo', '42'], {
       root: process.cwd(),
@@ -65,7 +63,7 @@ describe('pr:decline', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(declinePullRequestStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -81,7 +79,7 @@ describe('pr:decline', () => {
     await cmd.run()
 
     expect(declinePullRequestStub.calledOnce).to.be.true
-    expect(declinePullRequestStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 42])
+    expect(declinePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

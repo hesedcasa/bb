@@ -5,24 +5,22 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('repo:get', () => {
   let RepoGet: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let getRepositoryStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   // eslint-disable-next-line camelcase
   const mockResult = {data: {full_name: 'my-ws/my-repo', slug: 'my-repo'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     getRepositoryStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -32,7 +30,7 @@ describe('repo:get', () => {
         clearClients: clearClientsStub,
         getRepository: getRepositoryStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
     })
     RepoGet = imported.default
@@ -47,16 +45,16 @@ describe('repo:get', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getRepositoryStub.calledOnce).to.be.true
-    expect(getRepositoryStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo'])
+    expect(getRepositoryStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new RepoGet(['my-ws', 'my-repo'], {
       root: process.cwd(),
@@ -66,7 +64,7 @@ describe('repo:get', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getRepositoryStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -82,7 +80,7 @@ describe('repo:get', () => {
     await cmd.run()
 
     expect(getRepositoryStub.calledOnce).to.be.true
-    expect(getRepositoryStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo'])
+    expect(getRepositoryStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo'])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

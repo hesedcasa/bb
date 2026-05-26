@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pr:approve', () => {
   let PrApprove: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let approvePullRequestStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {approved: true}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     approvePullRequestStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,7 +29,7 @@ describe('pr:approve', () => {
         approvePullRequest: approvePullRequestStub,
         clearClients: clearClientsStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
     })
     PrApprove = imported.default
@@ -46,16 +44,16 @@ describe('pr:approve', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(approvePullRequestStub.calledOnce).to.be.true
-    expect(approvePullRequestStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 42])
+    expect(approvePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnce).to.be.true
     expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PrApprove(['my-ws', 'my-repo', '42'], {
       root: process.cwd(),
@@ -65,7 +63,7 @@ describe('pr:approve', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(approvePullRequestStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -81,7 +79,7 @@ describe('pr:approve', () => {
     await cmd.run()
 
     expect(approvePullRequestStub.calledOnce).to.be.true
-    expect(approvePullRequestStub.firstCall.args).to.deep.equal([mockConfig.auth, 'my-ws', 'my-repo', 42])
+    expect(approvePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

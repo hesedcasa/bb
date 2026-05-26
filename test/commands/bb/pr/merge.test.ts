@@ -5,23 +5,21 @@ import {type SinonStub, stub} from 'sinon'
 
 describe('pr:merge', () => {
   let PrMerge: any
-  let readConfigStub: SinonStub
+  let createProfileManagerStub: SinonStub
   let mergePullRequestStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
-  const mockConfig = {
-    auth: {
-      apiToken: 'test-token',
-      email: 'test@example.com',
-      host: 'https://bitbucket.org',
-    },
+  const mockAuth = {
+    apiToken: 'test-token',
+    email: 'test@example.com',
+    host: 'https://bitbucket.org',
   }
 
   const mockResult = {data: {state: 'MERGED'}, success: true}
 
   beforeEach(async () => {
-    readConfigStub = stub().resolves(mockConfig)
+    createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
     mergePullRequestStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
@@ -31,7 +29,7 @@ describe('pr:merge', () => {
         clearClients: clearClientsStub,
         mergePullRequest: mergePullRequestStub,
       },
-      '../../../../src/config.js': {readConfig: readConfigStub},
+      '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
       '../../../../src/format.js': {formatAsToon: formatAsToonStub},
     })
     PrMerge = imported.default
@@ -46,10 +44,10 @@ describe('pr:merge', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(mergePullRequestStub.calledOnce).to.be.true
     expect(mergePullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       42,
@@ -73,7 +71,7 @@ describe('pr:merge', () => {
 
     expect(mergePullRequestStub.calledOnce).to.be.true
     expect(mergePullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       42,
@@ -86,7 +84,7 @@ describe('pr:merge', () => {
   })
 
   it('returns early when config is missing', async () => {
-    readConfigStub.resolves(null)
+    createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
     const cmd = new PrMerge(['my-ws', 'my-repo', '42'], {
       root: process.cwd(),
@@ -96,7 +94,7 @@ describe('pr:merge', () => {
 
     await cmd.run()
 
-    expect(readConfigStub.calledOnce).to.be.true
+    expect(createProfileManagerStub.calledOnce).to.be.true
     expect(mergePullRequestStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
@@ -113,7 +111,7 @@ describe('pr:merge', () => {
 
     expect(mergePullRequestStub.calledOnce).to.be.true
     expect(mergePullRequestStub.firstCall.args).to.deep.equal([
-      mockConfig.auth,
+      mockAuth,
       'my-ws',
       'my-repo',
       42,
