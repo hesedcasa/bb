@@ -8,7 +8,7 @@
   },
   "bugs": "https://github.com/hesedcasa/bb/issues",
   "dependencies": {
-    "@hesed/plugin-lib": "^0.3.0",
+    "@hesed/plugin-lib": "^0.4.0",
     "@inquirer/prompts": "^8.2.0",
     "@oclif/core": "^4",
     "fs-extra": "^11.3.3"
