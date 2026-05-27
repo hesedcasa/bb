@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/hesedcasa/bb/compare/v0.5.1...v0.6.0) (2026-05-27)
+
+
+### 🎉 Features
+
+* add auth delete command and upgrade plugin-lib to 0.4.0 ([#64](https://github.com/hesedcasa/bb/issues/64)) ([725176b](https://github.com/hesedcasa/bb/commit/725176b8e112772990af90af9cef0cc342cbb833))
+
+
+### ♻️ Chores
+
+* migrate auth commands and format to @hesed/plugin-lib ([#62](https://github.com/hesedcasa/bb/issues/62)) ([113ae32](https://github.com/hesedcasa/bb/commit/113ae32db8deb4274999dbc288cf3d620c278417))
+
 ## [0.5.1](https://github.com/hesedcasa/bb/compare/v0.5.0...v0.5.1) (2026-05-14)
 
 
