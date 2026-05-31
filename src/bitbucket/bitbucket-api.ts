@@ -136,6 +136,21 @@ export class BitbucketApi {
   }
 
   /**
+   * Delete a comment on a pull request
+   */
+  async deletePullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+  ): Promise<ApiResult> {
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`,
+      {method: 'DELETE'},
+    )
+  }
+
+  /**
    * Delete a repository
    */
   async deleteRepository(workspace: string, repoSlug: string): Promise<ApiResult> {

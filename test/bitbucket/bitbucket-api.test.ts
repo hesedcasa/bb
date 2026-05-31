@@ -595,6 +595,18 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('deletePullRequestComment', () => {
+    it('calls DELETE /repositories/:workspace/:repoSlug/pullrequests/:id/comments/:commentId', async () => {
+      fetchStub.resolves(new Response('', {status: 200}))
+
+      await api.deletePullRequestComment('ws', 'repo', 42, 100)
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pullrequests/42/comments/100')
+      expect(options.method).to.equal('DELETE')
+    })
+  })
+
   describe('replyToPullRequestComment', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
       fetchStub.resolves(new Response(JSON.stringify({id: 200}), {status: 201}))

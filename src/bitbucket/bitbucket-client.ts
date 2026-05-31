@@ -49,6 +49,18 @@ export async function createRepository(
   return bb.createRepository(workspace, repoSlug, options)
 }
 
+// eslint-disable-next-line max-params
+export async function deletePullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  commentId: number,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.deletePullRequestComment(workspace, repoSlug, pullRequestId, commentId)
+}
+
 export async function deleteRepository(config: AuthConfig, workspace: string, repoSlug: string): Promise<ApiResult> {
   const bb = await getClient(config)
   return bb.deleteRepository(workspace, repoSlug)
