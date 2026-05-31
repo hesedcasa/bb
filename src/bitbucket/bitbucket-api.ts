@@ -221,6 +221,27 @@ export class BitbucketApi {
   }
 
   /**
+   * List comments on a pull request
+   */
+  // eslint-disable-next-line max-params
+  async listPullRequestComments(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    page = 1,
+    pagelen = 10,
+  ): Promise<ApiResult> {
+    const params = new URLSearchParams({
+      page: String(page),
+      pagelen: String(pagelen),
+    })
+
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments?${params.toString()}`,
+    )
+  }
+
+  /**
    * List pull requests for a repository
    */
   // eslint-disable-next-line max-params

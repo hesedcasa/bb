@@ -564,6 +564,37 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('listPullRequestComments', () => {
+    it('calls GET /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestComments('ws', 'repo', 42)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('https://api.bitbucket.org/2.0/repositories/ws/repo/pullrequests/42/comments')
+    })
+
+    it('includes pagination params', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestComments('ws', 'repo', 42, 2, 25)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('page=2')
+      expect(url).to.include('pagelen=25')
+    })
+
+    it('uses default pagination when not specified', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestComments('ws', 'repo', 42)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('page=1')
+      expect(url).to.include('pagelen=10')
+    })
+  })
+
   describe('getPipeline', () => {
     it('calls GET /repositories/:workspace/:repoSlug/pipelines/:uuid', async () => {
       fetchStub.resolves(new Response(JSON.stringify({uuid: '{pipe-1}'}), {status: 200}))
