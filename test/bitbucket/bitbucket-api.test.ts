@@ -607,6 +607,28 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('updatePullRequestComment', () => {
+    it('calls PUT /repositories/:workspace/:repoSlug/pullrequests/:id/comments/:commentId', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 100}), {status: 200}))
+
+      await api.updatePullRequestComment('ws', 'repo', 42, 100, 'Updated text')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pullrequests/42/comments/100')
+      expect(options.method).to.equal('PUT')
+    })
+
+    it('sends content.raw in body', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 100}), {status: 200}))
+
+      await api.updatePullRequestComment('ws', 'repo', 42, 100, 'Updated text')
+
+      const [, options] = fetchStub.firstCall.args
+      const body = JSON.parse(options.body)
+      expect(body.content.raw).to.equal('Updated text')
+    })
+  })
+
   describe('replyToPullRequestComment', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
       fetchStub.resolves(new Response(JSON.stringify({id: 200}), {status: 201}))

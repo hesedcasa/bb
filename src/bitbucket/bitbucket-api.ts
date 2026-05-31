@@ -416,6 +416,23 @@ export class BitbucketApi {
   }
 
   /**
+   * Update a comment on a pull request
+   */
+  // eslint-disable-next-line max-params
+  async updatePullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+    content: string,
+  ): Promise<ApiResult> {
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`,
+      {body: JSON.stringify({content: {raw: content}}), method: 'PUT'},
+    )
+  }
+
+  /**
    * Build authorization header
    */
   private getAuthHeader(): string {
