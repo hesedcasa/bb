@@ -317,6 +317,28 @@ export class BitbucketApi {
   }
 
   /**
+   * Reply to a comment on a pull request
+   */
+  // eslint-disable-next-line max-params
+  async replyToPullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+    content: string,
+  ): Promise<ApiResult> {
+    const body = {
+      content: {raw: content},
+      parent: {id: commentId},
+    }
+
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments`, {
+      body: JSON.stringify(body),
+      method: 'POST',
+    })
+  }
+
+  /**
    * Test Bitbucket API connection
    */
   async testConnection(): Promise<ApiResult> {

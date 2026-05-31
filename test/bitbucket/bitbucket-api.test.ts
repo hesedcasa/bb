@@ -595,6 +595,29 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('replyToPullRequestComment', () => {
+    it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 200}), {status: 201}))
+
+      await api.replyToPullRequestComment('ws', 'repo', 42, 100, 'Thanks!')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pullrequests/42/comments')
+      expect(options.method).to.equal('POST')
+    })
+
+    it('sends content.raw and parent.id in body', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 200}), {status: 201}))
+
+      await api.replyToPullRequestComment('ws', 'repo', 42, 100, 'Thanks!')
+
+      const [, options] = fetchStub.firstCall.args
+      const body = JSON.parse(options.body)
+      expect(body.content.raw).to.equal('Thanks!')
+      expect(body.parent.id).to.equal(100)
+    })
+  })
+
   describe('getPipeline', () => {
     it('calls GET /repositories/:workspace/:repoSlug/pipelines/:uuid', async () => {
       fetchStub.resolves(new Response(JSON.stringify({uuid: '{pipe-1}'}), {status: 200}))

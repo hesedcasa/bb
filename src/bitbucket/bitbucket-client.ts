@@ -195,6 +195,19 @@ export async function listPullRequestComments(
 }
 
 // eslint-disable-next-line max-params
+export async function replyToPullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  commentId: number,
+  content: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.replyToPullRequestComment(workspace, repoSlug, pullRequestId, commentId, content)
+}
+
+// eslint-disable-next-line max-params
 export async function listPipelines(
   config: AuthConfig,
   workspace: string,
