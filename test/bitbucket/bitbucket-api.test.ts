@@ -522,6 +522,48 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('createPullRequestComment', () => {
+    it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+
+      await api.createPullRequestComment('ws', 'repo', 42, 'Looks good')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pullrequests/42/comments')
+      expect(options.method).to.equal('POST')
+    })
+
+    it('sends content.raw in body', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+
+      await api.createPullRequestComment('ws', 'repo', 42, 'Looks good')
+
+      const [, options] = fetchStub.firstCall.args
+      const body = JSON.parse(options.body)
+      expect(body.content.raw).to.equal('Looks good')
+    })
+
+    it('includes inline when path and line are provided', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+
+      await api.createPullRequestComment('ws', 'repo', 42, 'Fix this', {line: 15, path: 'src/foo.ts'})
+
+      const [, options] = fetchStub.firstCall.args
+      const body = JSON.parse(options.body)
+      expect(body.inline).to.deep.equal({path: 'src/foo.ts', to: 15})
+    })
+
+    it('omits inline when not provided', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+
+      await api.createPullRequestComment('ws', 'repo', 42, 'General comment')
+
+      const [, options] = fetchStub.firstCall.args
+      const body = JSON.parse(options.body)
+      expect(body.inline).to.be.undefined
+    })
+  })
+
   describe('getPipeline', () => {
     it('calls GET /repositories/:workspace/:repoSlug/pipelines/:uuid', async () => {
       fetchStub.resolves(new Response(JSON.stringify({uuid: '{pipe-1}'}), {status: 200}))

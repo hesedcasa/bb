@@ -128,6 +128,19 @@ export async function mergePullRequest(
   return bb.mergePullRequest(workspace, repoSlug, pullRequestId, mergeStrategy, closeSrcBranch, message)
 }
 
+// eslint-disable-next-line max-params
+export async function createPullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  content: string,
+  inline?: {line: number; path: string},
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.createPullRequestComment(workspace, repoSlug, pullRequestId, content, inline)
+}
+
 export async function declinePullRequest(
   config: AuthConfig,
   workspace: string,

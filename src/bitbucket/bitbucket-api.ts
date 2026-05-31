@@ -80,6 +80,29 @@ export class BitbucketApi {
   }
 
   /**
+   * Create a comment on a pull request, optionally inline on a specific file and line
+   */
+  // eslint-disable-next-line max-params
+  async createPullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    content: string,
+    inline?: {line: number; path: string},
+  ): Promise<ApiResult> {
+    const body: Record<string, unknown> = {content: {raw: content}}
+
+    if (inline) {
+      body.inline = {path: inline.path, to: inline.line}
+    }
+
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments`, {
+      body: JSON.stringify(body),
+      method: 'POST',
+    })
+  }
+
+  /**
    * Create a repository
    */
   async createRepository(
