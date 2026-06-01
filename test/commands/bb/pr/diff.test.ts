@@ -58,7 +58,11 @@ describe('pr:diff', () => {
     } as any)
     const logStub = stub(cmd, 'log')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+    } catch {
+      // expected error when config is missing
+    }
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getPullRequestDiffStub.called).to.be.false

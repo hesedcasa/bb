@@ -25,7 +25,7 @@ export default class PipelineList extends Command {
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
     const auth = await loadAuthConfig()
     if (!auth) {
-      return
+      this.error(`Missing authentication config.`)
     }
 
     const result = await listPipelines(auth, args.workspace, args.repoSlug, flags.page, flags.pagelen, flags.sort)

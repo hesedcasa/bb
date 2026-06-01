@@ -29,7 +29,7 @@ export default class PrCreate extends Command {
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
     const auth = await loadAuthConfig()
     if (!auth) {
-      return
+      this.error(`Missing authentication config.`)
     }
 
     const reviewers = flags.reviewers ? flags.reviewers.split(',').map((r) => r.trim()) : undefined

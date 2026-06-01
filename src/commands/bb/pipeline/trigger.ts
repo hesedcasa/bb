@@ -27,7 +27,7 @@ export default class PipelineTrigger extends Command {
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
     const auth = await loadAuthConfig()
     if (!auth) {
-      return
+      this.error(`Missing authentication config.`)
     }
 
     const target: {refName: string; refType: string; selector?: {pattern?: string; type?: string}} = {

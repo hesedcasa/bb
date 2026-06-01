@@ -102,7 +102,11 @@ describe('pr:update', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+    } catch {
+      // expected error when config is missing
+    }
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(updatePullRequestStub.called).to.be.false

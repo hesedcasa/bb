@@ -25,7 +25,7 @@ export default class PrList extends Command {
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
     const auth = await loadAuthConfig()
     if (!auth) {
-      return
+      this.error(`Missing authentication config.`)
     }
 
     const result = await listPullRequests(auth, args.workspace, args.repoSlug, flags.state, flags.page, flags.pagelen)
