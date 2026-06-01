@@ -144,10 +144,9 @@ export class BitbucketApi {
     pullRequestId: number,
     commentId: number,
   ): Promise<ApiResult> {
-    return this.request(
-      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`,
-      {method: 'DELETE'},
-    )
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`, {
+      method: 'DELETE',
+    })
   }
 
   /**
@@ -354,6 +353,21 @@ export class BitbucketApi {
   }
 
   /**
+   * Resolve a comment on a pull request
+   */
+  async resolvePullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+  ): Promise<ApiResult> {
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}/resolve`,
+      {method: 'POST'},
+    )
+  }
+
+  /**
    * Test Bitbucket API connection
    */
   async testConnection(): Promise<ApiResult> {
@@ -426,10 +440,10 @@ export class BitbucketApi {
     commentId: number,
     content: string,
   ): Promise<ApiResult> {
-    return this.request(
-      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`,
-      {body: JSON.stringify({content: {raw: content}}), method: 'PUT'},
-    )
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`, {
+      body: JSON.stringify({content: {raw: content}}),
+      method: 'PUT',
+    })
   }
 
   /**

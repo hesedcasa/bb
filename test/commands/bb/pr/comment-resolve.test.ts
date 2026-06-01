@@ -3,10 +3,10 @@ import {expect} from 'chai'
 import esmock from 'esmock'
 import {type SinonStub, stub} from 'sinon'
 
-describe('pr:comment-reply', () => {
-  let PrCommentReply: any
+describe('pr:comment-resolve', () => {
+  let PrCommentResolve: any
   let createProfileManagerStub: SinonStub
-  let replyToPullRequestCommentStub: SinonStub
+  let resolvePullRequestCommentStub: SinonStub
   let clearClientsStub: SinonStub
   let formatAsToonStub: SinonStub
 
@@ -16,26 +16,26 @@ describe('pr:comment-reply', () => {
     host: 'https://bitbucket.org',
   }
 
-  const mockResult = {data: {content: {raw: 'Thanks!'}, id: 200}, success: true}
+  const mockResult = {data: {id: 100, resolved: true}, success: true}
 
   beforeEach(async () => {
     createProfileManagerStub = stub().returns({loadAuthConfig: stub().resolves(mockAuth)})
-    replyToPullRequestCommentStub = stub().resolves(mockResult)
+    resolvePullRequestCommentStub = stub().resolves(mockResult)
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
-    const imported = await esmock('../../../../src/commands/bb/pr/comment-reply.js', {
+    const imported = await esmock('../../../../src/commands/bb/pr/comment-resolve.js', {
       '../../../../src/bitbucket/bitbucket-client.js': {
         clearClients: clearClientsStub,
-        replyToPullRequestComment: replyToPullRequestCommentStub,
+        resolvePullRequestComment: resolvePullRequestCommentStub,
       },
       '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub, formatAsToon: formatAsToonStub},
     })
-    PrCommentReply = imported.default
+    PrCommentResolve = imported.default
   })
 
-  it('calls replyToPullRequestComment with correct args and outputs JSON', async () => {
-    const cmd = new PrCommentReply(['my-ws', 'my-repo', '42', '100', '--body', 'Thanks!'], {
+  it('calls resolvePullRequestComment with correct args and outputs JSON', async () => {
+    const cmd = new PrCommentResolve(['my-ws', 'my-repo', '42', '100'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -44,15 +44,8 @@ describe('pr:comment-reply', () => {
     await cmd.run()
 
     expect(createProfileManagerStub.calledOnce).to.be.true
-    expect(replyToPullRequestCommentStub.calledOnce).to.be.true
-    expect(replyToPullRequestCommentStub.firstCall.args).to.deep.equal([
-      mockAuth,
-      'my-ws',
-      'my-repo',
-      42,
-      100,
-      'Thanks!',
-    ])
+    expect(resolvePullRequestCommentStub.calledOnce).to.be.true
+    expect(resolvePullRequestCommentStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, 100])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(logJsonStub.calledOnceWith(mockResult)).to.be.true
   })
@@ -60,7 +53,7 @@ describe('pr:comment-reply', () => {
   it('returns early when config is missing', async () => {
     createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
-    const cmd = new PrCommentReply(['my-ws', 'my-repo', '42', '100', '--body', 'hi'], {
+    const cmd = new PrCommentResolve(['my-ws', 'my-repo', '42', '100'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -68,13 +61,13 @@ describe('pr:comment-reply', () => {
 
     await cmd.run()
 
-    expect(replyToPullRequestCommentStub.called).to.be.false
+    expect(resolvePullRequestCommentStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
     expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
-    const cmd = new PrCommentReply(['my-ws', 'my-repo', '42', '100', '--body', 'Thanks!', '--toon'], {
+    const cmd = new PrCommentResolve(['my-ws', 'my-repo', '42', '100', '--toon'], {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
@@ -82,14 +75,7 @@ describe('pr:comment-reply', () => {
 
     await cmd.run()
 
-    expect(replyToPullRequestCommentStub.firstCall.args).to.deep.equal([
-      mockAuth,
-      'my-ws',
-      'my-repo',
-      42,
-      100,
-      'Thanks!',
-    ])
+    expect(resolvePullRequestCommentStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, 100])
     expect(formatAsToonStub.calledOnceWith(mockResult)).to.be.true
     expect(logStub.calledWith('toon-output')).to.be.true
   })
