@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/hesedcasa/bb/compare/v0.6.0...v0.7.0) (2026-06-01)
+
+
+### 🎉 Features
+
+* add pr comment command for line-level PR comments ([#68](https://github.com/hesedcasa/bb/issues/68)) ([7b48e42](https://github.com/hesedcasa/bb/commit/7b48e420c220947159844a01d91218ab3ca8a7e7))
+
 ## [0.6.0](https://github.com/hesedcasa/bb/compare/v0.5.1...v0.6.0) (2026-05-27)
 
 
