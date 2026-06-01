@@ -80,6 +80,29 @@ export class BitbucketApi {
   }
 
   /**
+   * Create a comment on a pull request, optionally inline on a specific file and line
+   */
+  // eslint-disable-next-line max-params
+  async createPullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    content: string,
+    inline?: {line: number; path: string},
+  ): Promise<ApiResult> {
+    const body: Record<string, unknown> = {content: {raw: content}}
+
+    if (inline) {
+      body.inline = {path: inline.path, to: inline.line}
+    }
+
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments`, {
+      body: JSON.stringify(body),
+      method: 'POST',
+    })
+  }
+
+  /**
    * Create a repository
    */
   async createRepository(
@@ -109,6 +132,20 @@ export class BitbucketApi {
   async declinePullRequest(workspace: string, repoSlug: string, pullRequestId: number): Promise<ApiResult> {
     return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/decline`, {
       method: 'POST',
+    })
+  }
+
+  /**
+   * Delete a comment on a pull request
+   */
+  async deletePullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+  ): Promise<ApiResult> {
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`, {
+      method: 'DELETE',
     })
   }
 
@@ -198,6 +235,27 @@ export class BitbucketApi {
   }
 
   /**
+   * List comments on a pull request
+   */
+  // eslint-disable-next-line max-params
+  async listPullRequestComments(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    page = 1,
+    pagelen = 10,
+  ): Promise<ApiResult> {
+    const params = new URLSearchParams({
+      page: String(page),
+      pagelen: String(pagelen),
+    })
+
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments?${params.toString()}`,
+    )
+  }
+
+  /**
    * List pull requests for a repository
    */
   // eslint-disable-next-line max-params
@@ -273,6 +331,43 @@ export class BitbucketApi {
   }
 
   /**
+   * Reply to a comment on a pull request
+   */
+  // eslint-disable-next-line max-params
+  async replyToPullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+    content: string,
+  ): Promise<ApiResult> {
+    const body = {
+      content: {raw: content},
+      parent: {id: commentId},
+    }
+
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments`, {
+      body: JSON.stringify(body),
+      method: 'POST',
+    })
+  }
+
+  /**
+   * Resolve a comment on a pull request
+   */
+  async resolvePullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+  ): Promise<ApiResult> {
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}/resolve`,
+      {method: 'POST'},
+    )
+  }
+
+  /**
    * Test Bitbucket API connection
    */
   async testConnection(): Promise<ApiResult> {
@@ -330,6 +425,23 @@ export class BitbucketApi {
   ): Promise<ApiResult> {
     return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}`, {
       body: JSON.stringify(fields),
+      method: 'PUT',
+    })
+  }
+
+  /**
+   * Update a comment on a pull request
+   */
+  // eslint-disable-next-line max-params
+  async updatePullRequestComment(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    commentId: number,
+    content: string,
+  ): Promise<ApiResult> {
+    return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments/${commentId}`, {
+      body: JSON.stringify({content: {raw: content}}),
       method: 'PUT',
     })
   }

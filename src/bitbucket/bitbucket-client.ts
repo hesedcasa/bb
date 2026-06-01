@@ -49,6 +49,18 @@ export async function createRepository(
   return bb.createRepository(workspace, repoSlug, options)
 }
 
+// eslint-disable-next-line max-params
+export async function deletePullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  commentId: number,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.deletePullRequestComment(workspace, repoSlug, pullRequestId, commentId)
+}
+
 export async function deleteRepository(config: AuthConfig, workspace: string, repoSlug: string): Promise<ApiResult> {
   const bb = await getClient(config)
   return bb.deleteRepository(workspace, repoSlug)
@@ -115,6 +127,31 @@ export async function updatePullRequest(
 }
 
 // eslint-disable-next-line max-params
+export async function updatePullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  commentId: number,
+  content: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.updatePullRequestComment(workspace, repoSlug, pullRequestId, commentId, content)
+}
+
+// eslint-disable-next-line max-params
+export async function resolvePullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  commentId: number,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.resolvePullRequestComment(workspace, repoSlug, pullRequestId, commentId)
+}
+
+// eslint-disable-next-line max-params
 export async function mergePullRequest(
   config: AuthConfig,
   workspace: string,
@@ -126,6 +163,19 @@ export async function mergePullRequest(
 ): Promise<ApiResult> {
   const bb = await getClient(config)
   return bb.mergePullRequest(workspace, repoSlug, pullRequestId, mergeStrategy, closeSrcBranch, message)
+}
+
+// eslint-disable-next-line max-params
+export async function createPullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  content: string,
+  inline?: {line: number; path: string},
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.createPullRequestComment(workspace, repoSlug, pullRequestId, content, inline)
 }
 
 export async function declinePullRequest(
@@ -166,6 +216,32 @@ export async function unapprovePullRequest(
 ): Promise<ApiResult> {
   const bb = await getClient(config)
   return bb.unapprovePullRequest(workspace, repoSlug, pullRequestId)
+}
+
+// eslint-disable-next-line max-params
+export async function listPullRequestComments(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  page = 1,
+  pagelen = 10,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.listPullRequestComments(workspace, repoSlug, pullRequestId, page, pagelen)
+}
+
+// eslint-disable-next-line max-params
+export async function replyToPullRequestComment(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  commentId: number,
+  content: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.replyToPullRequestComment(workspace, repoSlug, pullRequestId, commentId, content)
 }
 
 // eslint-disable-next-line max-params
