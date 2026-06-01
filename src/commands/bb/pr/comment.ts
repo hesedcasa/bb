@@ -34,7 +34,7 @@ export default class PrComment extends Command {
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
     const auth = await loadAuthConfig()
     if (!auth) {
-      return
+      this.error(`Missing authentication config.`)
     }
 
     const inline = flags.file && flags.line !== undefined ? {line: flags.line, path: flags.file} : undefined

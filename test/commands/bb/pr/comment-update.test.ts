@@ -66,7 +66,11 @@ describe('pr:comment-update', () => {
     } as any)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+    } catch {
+      // expected error when config is missing
+    }
 
     expect(updatePullRequestCommentStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false

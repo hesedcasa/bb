@@ -56,7 +56,11 @@ describe('workspace:get', () => {
     const cmd = new WorkspaceGet(['my-workspace'], oclifConfig)
     const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    try {
+      await cmd.run()
+    } catch {
+      // expected error when config is missing
+    }
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getWorkspaceStub.called).to.be.false
