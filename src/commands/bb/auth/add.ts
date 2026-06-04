@@ -4,6 +4,7 @@ import {clearClients, testConnection} from '../../../bitbucket/bitbucket-client.
 
 export default createAuthAddCommand({
   clearClients,
+  configFile: 'bb-config.json',
   serviceName: 'Bitbucket',
   testConnection,
 })
