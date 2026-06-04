@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/hesedcasa/bb/compare/v0.7.0...v0.8.0) (2026-06-04)
+
+
+### 🎉 Features
+
+* upgrade @hesed/plugin-lib to 0.9.0 and add explicit configFile to auth commands ([bd7d7a7](https://github.com/hesedcasa/bb/commit/bd7d7a75b49f2811d3a39d4eb773ee0718ecbb50))
+
 ## [0.7.0](https://github.com/hesedcasa/bb/compare/v0.6.0...v0.7.0) (2026-06-01)
 
 
