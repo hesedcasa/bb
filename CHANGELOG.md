@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/hesedcasa/bb/compare/v0.8.1...v0.8.2) (2026-06-05)
+
+
+### 🛠️ Fixes
+
+* use /user/workspaces endpoint for listing workspaces ([6ded09d](https://github.com/hesedcasa/bb/commit/6ded09d4bb92c1c0c1b18e710dd257c979cc0b50))
+
 ## [0.8.1](https://github.com/hesedcasa/bb/compare/v0.8.0...v0.8.1) (2026-06-05)
 
 
