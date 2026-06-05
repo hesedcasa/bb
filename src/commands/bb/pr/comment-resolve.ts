@@ -21,7 +21,7 @@ export default class PrCommentResolve extends Command {
 
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(PrCommentResolve)
-    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile, 'bb-config.json')
     const auth = await loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)

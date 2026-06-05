@@ -31,7 +31,7 @@ export default class PrComment extends Command {
       this.error('--file and --line must be used together')
     }
 
-    const {loadAuthConfig} = createProfileManager(this.config, flags.profile)
+    const {loadAuthConfig} = createProfileManager(this.config, flags.profile, 'bb-config.json')
     const auth = await loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)
