@@ -301,7 +301,7 @@ export class BitbucketApi {
       pagelen: String(pagelen),
     })
 
-    return this.request(`/workspaces?${params.toString()}`)
+    return this.request(`/user/workspaces?${params.toString()}`)
   }
 
   /**
