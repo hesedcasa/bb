@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/hesedcasa/bb/compare/v0.8.0...v0.8.1) (2026-06-05)
+
+
+### 🛠️ Fixes
+
+* pass explicit configFile to createProfileManager in all commands ([ca79a73](https://github.com/hesedcasa/bb/commit/ca79a733b073ea4851e29ae07d4bd089ba487170))
+
 ## [0.8.0](https://github.com/hesedcasa/bb/compare/v0.7.0...v0.8.0) (2026-06-04)
 
 
