@@ -37,16 +37,14 @@ describe('workspace:get', () => {
   it('calls getWorkspace with correct args and outputs JSON', async () => {
     const oclifConfig = {root: process.cwd(), runHook: stub().resolves({failures: [], successes: []})} as any
     const cmd = new WorkspaceGet(['my-workspace'], oclifConfig)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getWorkspaceStub.calledOnce).to.be.true
     expect(getWorkspaceStub.firstCall.args).to.deep.equal([mockAuth, 'my-workspace'])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
-    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
@@ -54,7 +52,6 @@ describe('workspace:get', () => {
 
     const oclifConfig = {root: process.cwd(), runHook: stub().resolves({failures: [], successes: []})} as any
     const cmd = new WorkspaceGet(['my-workspace'], oclifConfig)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -65,7 +62,6 @@ describe('workspace:get', () => {
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(getWorkspaceStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {

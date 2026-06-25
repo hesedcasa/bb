@@ -39,9 +39,8 @@ describe('pr:comment', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(createPullRequestCommentStub.calledOnce).to.be.true
     expect(createPullRequestCommentStub.firstCall.args).to.deep.equal([
@@ -53,7 +52,7 @@ describe('pr:comment', () => {
       undefined,
     ])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnceWith(mockResult)).to.be.true
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('posts an inline comment with --file and --line', async () => {
@@ -64,9 +63,8 @@ describe('pr:comment', () => {
         runHook: stub().resolves({failures: [], successes: []}),
       } as any,
     )
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(createPullRequestCommentStub.firstCall.args).to.deep.equal([
       mockAuth,
@@ -76,7 +74,7 @@ describe('pr:comment', () => {
       'Fix this',
       {line: 15, path: 'src/foo.ts'},
     ])
-    expect(logJsonStub.calledOnceWith(mockResult)).to.be.true
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('errors when --file is given without --line', async () => {
@@ -84,7 +82,6 @@ describe('pr:comment', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -101,7 +98,6 @@ describe('pr:comment', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -120,7 +116,6 @@ describe('pr:comment', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -130,7 +125,6 @@ describe('pr:comment', () => {
 
     expect(createPullRequestCommentStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {

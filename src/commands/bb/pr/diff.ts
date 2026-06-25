@@ -1,9 +1,10 @@
 import {createProfileManager} from '@hesed/plugin-lib'
-import {Args, Command, Flags} from '@oclif/core'
+import {Args, Flags} from '@oclif/core'
 
+import {BaseCommand} from '../../../base-command.js'
 import {clearClients, getPullRequestDiff} from '../../../bitbucket/bitbucket-client.js'
 
-export default class PrDiff extends Command {
+export default class PrDiff extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
@@ -15,6 +16,10 @@ export default class PrDiff extends Command {
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo 123']
   static override flags = {
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
+  }
+
+  public override jsonEnabled(): boolean {
+    return false
   }
 
   public async run(): Promise<void> {

@@ -39,9 +39,8 @@ describe('pr:update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(updatePullRequestStub.calledOnce).to.be.true
@@ -53,8 +52,7 @@ describe('pr:update', () => {
       {title: 'Updated title'},
     ])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
-    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('calls updatePullRequest with both title and description flags', async () => {
@@ -62,7 +60,6 @@ describe('pr:update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     await cmd.run()
 
@@ -75,7 +72,6 @@ describe('pr:update', () => {
       {description: 'New description', title: 'New title'},
     ])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
   })
 
   it('calls updatePullRequest with empty fields when no optional flags provided', async () => {
@@ -83,14 +79,12 @@ describe('pr:update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     await cmd.run()
 
     expect(updatePullRequestStub.calledOnce).to.be.true
     expect(updatePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, {}])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
   })
 
   it('returns early when config is missing', async () => {
@@ -100,7 +94,6 @@ describe('pr:update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -111,7 +104,6 @@ describe('pr:update', () => {
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(updatePullRequestStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {

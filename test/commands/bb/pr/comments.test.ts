@@ -39,15 +39,14 @@ describe('pr:comments', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listPullRequestCommentsStub.calledOnce).to.be.true
     expect(listPullRequestCommentsStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, 1, 10])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnceWith(mockResult)).to.be.true
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('passes pagination flags correctly', async () => {
@@ -55,12 +54,11 @@ describe('pr:comments', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(listPullRequestCommentsStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, 3, 25])
-    expect(logJsonStub.calledOnceWith(mockResult)).to.be.true
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
@@ -70,7 +68,6 @@ describe('pr:comments', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -80,7 +77,6 @@ describe('pr:comments', () => {
 
     expect(listPullRequestCommentsStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {

@@ -1,9 +1,10 @@
-import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
-import {Args, Command, Flags} from '@oclif/core'
+import {type ApiResult, createProfileManager, formatAsToon} from '@hesed/plugin-lib'
+import {Args, Flags} from '@oclif/core'
 
+import {BaseCommand} from '../../../base-command.js'
 import {clearClients, createPullRequest} from '../../../bitbucket/bitbucket-client.js'
 
-export default class PrCreate extends Command {
+export default class PrCreate extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
@@ -24,7 +25,7 @@ export default class PrCreate extends Command {
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<ApiResult> {
     const {args, flags} = await this.parse(PrCreate)
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile, 'bb-config.json')
     const auth = await loadAuthConfig()
@@ -32,7 +33,7 @@ export default class PrCreate extends Command {
       this.error(`Missing authentication config.`)
     }
 
-    const reviewers = flags.reviewers ? flags.reviewers.split(',').map((r) => r.trim()) : undefined
+    const reviewers = flags.reviewers ? flags.reviewers.split(',').map((r: string) => r.trim()) : undefined
 
     const result = await createPullRequest(
       auth,
@@ -49,8 +50,8 @@ export default class PrCreate extends Command {
 
     if (flags.toon) {
       this.log(formatAsToon(result))
-    } else {
-      this.logJson(result)
     }
+
+    return result
   }
 }

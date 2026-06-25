@@ -42,16 +42,14 @@ describe('pipeline:list', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listPipelinesStub.calledOnce).to.be.true
     expect(listPipelinesStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 1, 10, undefined])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
-    expect(logJsonStub.firstCall.args[0]).to.deep.equal(mockResult)
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('passes custom page, pagelen, and sort flags', async () => {
@@ -59,14 +57,12 @@ describe('pipeline:list', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     await cmd.run()
 
     expect(listPipelinesStub.calledOnce).to.be.true
     expect(listPipelinesStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 3, 25, 'created_on'])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnce).to.be.true
   })
 
   it('returns early when config is missing', async () => {
@@ -76,7 +72,6 @@ describe('pipeline:list', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -87,7 +82,6 @@ describe('pipeline:list', () => {
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listPipelinesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {
