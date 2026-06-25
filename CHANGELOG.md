@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/hesedcasa/bb/compare/v0.8.2...v0.8.3) (2026-06-25)
+
+
+### ♻️ Chores
+
+* introduce BaseCommand to centralize run() return and JSON ([#85](https://github.com/hesedcasa/bb/issues/85)) ([0caeef0](https://github.com/hesedcasa/bb/commit/0caeef0e48be24e0b256c7de372266ce06ee9574))
+
 ## [0.8.2](https://github.com/hesedcasa/bb/compare/v0.8.1...v0.8.2) (2026-06-05)
 
 
