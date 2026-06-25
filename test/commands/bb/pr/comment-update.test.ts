@@ -39,9 +39,8 @@ describe('pr:comment-update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
-    await cmd.run()
+    const result = await cmd.run()
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(updatePullRequestCommentStub.calledOnce).to.be.true
@@ -54,7 +53,7 @@ describe('pr:comment-update', () => {
       'Updated text',
     ])
     expect(clearClientsStub.calledOnce).to.be.true
-    expect(logJsonStub.calledOnceWith(mockResult)).to.be.true
+    expect(result).to.deep.equal(mockResult)
   })
 
   it('returns early when config is missing', async () => {
@@ -64,7 +63,6 @@ describe('pr:comment-update', () => {
       root: process.cwd(),
       runHook: stub().resolves({failures: [], successes: []}),
     } as any)
-    const logJsonStub = stub(cmd, 'logJson')
 
     try {
       await cmd.run()
@@ -74,7 +72,6 @@ describe('pr:comment-update', () => {
 
     expect(updatePullRequestCommentStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
-    expect(logJsonStub.called).to.be.false
   })
 
   it('outputs TOON format when --toon flag is used', async () => {

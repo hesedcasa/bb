@@ -1,9 +1,10 @@
-import {createProfileManager, formatAsToon} from '@hesed/plugin-lib'
-import {Args, Command, Flags} from '@oclif/core'
+import {type ApiResult, createProfileManager, formatAsToon} from '@hesed/plugin-lib'
+import {Args, Flags} from '@oclif/core'
 
+import {BaseCommand} from '../../../base-command.js'
 import {clearClients, deleteRepository} from '../../../bitbucket/bitbucket-client.js'
 
-export default class RepoDelete extends Command {
+export default class RepoDelete extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
@@ -17,7 +18,7 @@ export default class RepoDelete extends Command {
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<ApiResult> {
     const {args, flags} = await this.parse(RepoDelete)
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile, 'bb-config.json')
     const auth = await loadAuthConfig()
@@ -30,8 +31,8 @@ export default class RepoDelete extends Command {
 
     if (flags.toon) {
       this.log(formatAsToon(result))
-    } else {
-      this.logJson(result)
     }
+
+    return result
   }
 }
