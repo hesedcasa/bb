@@ -60,7 +60,23 @@
     "dirname": "bb",
     "commands": "./dist/commands",
     "topicSeparator": " ",
-    "topics": {}
+    "topics": {
+      "bb": {
+        "description": "Commands for managing Bitbucket workflows and operations"
+      },
+      "bb:pipeline": {
+        "description": "List, get, or trigger pipelines"
+      },
+      "bb:pr": {
+        "description": "Perform various operations on pull request"
+      },
+      "bb:repo": {
+        "description": "Perform various operations on repository"
+      },
+      "bb:workspace": {
+        "description": "Get workspace details or list workspaces"
+      }
+    }
   },
   "repository": "hesedcasa/bb",
   "scripts": {

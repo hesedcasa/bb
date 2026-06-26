@@ -1,8 +1,6 @@
 import {Command} from '@oclif/core'
 
 export abstract class BaseCommand extends Command {
-  static override enableJsonFlag = true
-
   public override jsonEnabled(): boolean {
     const separatorIndex = this.argv.indexOf('--')
     const flagArgs = separatorIndex === -1 ? this.argv : this.argv.slice(0, separatorIndex)

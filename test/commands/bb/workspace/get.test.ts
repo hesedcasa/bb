@@ -24,7 +24,7 @@ describe('workspace:get', () => {
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
-    const imported = await esmock('../../../../src/commands/bb/workspace/get.js', {
+    const imported = await esmock('../../../../src/commands/bb/workspace/index.js', {
       '../../../../src/bitbucket/bitbucket-client.js': {
         clearClients: clearClientsStub,
         getWorkspace: getWorkspaceStub,

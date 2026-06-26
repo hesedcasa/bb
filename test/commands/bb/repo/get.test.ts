@@ -25,7 +25,7 @@ describe('repo:get', () => {
     clearClientsStub = stub()
     formatAsToonStub = stub().returns('toon-output')
 
-    const imported = await esmock('../../../../src/commands/bb/repo/get.js', {
+    const imported = await esmock('../../../../src/commands/bb/repo/index.js', {
       '../../../../src/bitbucket/bitbucket-client.js': {
         clearClients: clearClientsStub,
         getRepository: getRepositoryStub,
