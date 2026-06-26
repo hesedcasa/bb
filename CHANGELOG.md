@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.4](https://github.com/hesedcasa/bb/compare/v0.8.3...v0.8.4) (2026-06-26)
+
+
+### ♻️ Chores
+
+* rename command files to index.ts and add topic descriptions ([#87](https://github.com/hesedcasa/bb/issues/87)) ([f7aca00](https://github.com/hesedcasa/bb/commit/f7aca00273f74f642345c9295c36cf04435f613f))
+
 ## [0.8.3](https://github.com/hesedcasa/bb/compare/v0.8.2...v0.8.3) (2026-06-25)
 
 
