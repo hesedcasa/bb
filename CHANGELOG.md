@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/hesedcasa/bb/compare/v0.8.4...v0.9.0) (2026-07-31)
+
+
+### 🎉 Features
+
+* add commit and PR activity/commits commands ([#102](https://github.com/hesedcasa/bb/issues/102)) ([47bc112](https://github.com/hesedcasa/bb/commit/47bc112c50c4978e22706aa7604fbe2dfa08b5fa))
+
 ## [0.8.4](https://github.com/hesedcasa/bb/compare/v0.8.3...v0.8.4) (2026-06-26)
 
 
