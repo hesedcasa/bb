@@ -17,6 +17,7 @@ export default class PrList extends BaseCommand {
     page: Flags.integer({default: 1, description: 'Page number', required: false}),
     pagelen: Flags.integer({default: 10, description: 'Number of items per page', required: false}),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
+    q: Flags.string({description: 'Query string filter (e.g. created_on>="2026-04-01")', required: false}),
     state: Flags.string({description: 'Filter by state (OPEN, MERGED, DECLINED, SUPERSEDED)', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
@@ -29,7 +30,15 @@ export default class PrList extends BaseCommand {
       this.error(`Missing authentication config.`)
     }
 
-    const result = await listPullRequests(auth, args.workspace, args.repoSlug, flags.state, flags.page, flags.pagelen)
+    const result = await listPullRequests(
+      auth,
+      args.workspace,
+      args.repoSlug,
+      flags.state,
+      flags.page,
+      flags.pagelen,
+      flags.q,
+    )
     clearClients()
 
     if (flags.toon) {
