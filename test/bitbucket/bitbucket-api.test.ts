@@ -353,6 +353,136 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('getCommit', () => {
+    it('calls GET /repositories/:workspace/:repoSlug/commit/:sha', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({hash: 'abc123'}), {status: 200}))
+
+      await api.getCommit('ws', 'repo', 'abc123')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/commit/abc123')
+      expect(options.method).to.equal('GET')
+    })
+
+    it('returns the parsed commit on success', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({author: {raw: 'A <a@b.c>'}, hash: 'abc123'}), {status: 200}))
+
+      const result = await api.getCommit('ws', 'repo', 'abc123')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal({author: {raw: 'A <a@b.c>'}, hash: 'abc123'})
+    })
+
+    it('reports failure without throwing when the commit is missing', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({error: {message: 'Commit not found'}}), {status: 404}))
+
+      const result = await api.getCommit('ws', 'repo', 'nope')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal({error: {message: 'Commit not found'}})
+    })
+  })
+
+  describe('listCommits', () => {
+    it('calls GET with pagination params', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listCommits('ws', 'repo', 2, 20)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('/repositories/ws/repo/commits?')
+      expect(url).to.include('page=2')
+      expect(url).to.include('pagelen=20')
+    })
+
+    it('omits include and exclude when not provided', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listCommits('ws', 'repo')
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.not.include('include=')
+      expect(url).to.not.include('exclude=')
+    })
+
+    it('includes a single include/exclude pair when provided', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listCommits('ws', 'repo', 1, 10, ['feature-x'], ['master'])
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('include=feature-x')
+      expect(url).to.include('exclude=master')
+    })
+
+    it('preserves every repeated include and exclude ref', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listCommits('ws', 'repo', 1, 10, ['aaa111', 'bbb222'], ['ccc333', 'ddd444'])
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('include=aaa111')
+      expect(url).to.include('include=bbb222')
+      expect(url).to.include('exclude=ccc333')
+      expect(url).to.include('exclude=ddd444')
+    })
+  })
+
+  describe('listPullRequestCommits', () => {
+    it('calls GET /pullrequests/:id/commits with pagelen', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestCommits('ws', 'repo', 42, 25)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('/repositories/ws/repo/pullrequests/42/commits?')
+      expect(url).to.include('pagelen=25')
+    })
+
+    // The endpoint rejects a numeric page with "Invalid page", so the first request must send none.
+    it('omits page entirely when no token is provided', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestCommits('ws', 'repo', 42)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('pagelen=10')
+      expect(url).to.not.include('page=')
+    })
+
+    it('passes an opaque page token through unchanged', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestCommits('ws', 'repo', 42, 10, '67Fg')
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('page=67Fg')
+    })
+  })
+
+  describe('listPullRequestActivity', () => {
+    it('calls GET /pullrequests/:id/activity with pagination params', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestActivity('ws', 'repo', 42, 3, 50)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('/repositories/ws/repo/pullrequests/42/activity?')
+      expect(url).to.include('page=3')
+      expect(url).to.include('pagelen=50')
+    })
+
+    it('defaults pagination when not provided', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+
+      await api.listPullRequestActivity('ws', 'repo', 42)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('page=1')
+      expect(url).to.include('pagelen=10')
+    })
+  })
+
   describe('createPullRequest', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests', async () => {
       fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 201}))

@@ -26,7 +26,7 @@ $ npm install -g @hesed/bb
 $ bb COMMAND
 running command...
 $ bb (--version)
-@hesed/bb/0.8.4 linux-x64 node-v22.23.0
+@hesed/bb/0.8.4 darwin-arm64 node-v24.18.0
 $ bb --help [COMMAND]
 USAGE
   $ bb COMMAND
@@ -43,10 +43,13 @@ USAGE
 * [`bb bb auth profile`](#bb-bb-auth-profile)
 * [`bb bb auth test`](#bb-bb-auth-test)
 * [`bb bb auth update`](#bb-bb-auth-update)
+* [`bb bb commit WORKSPACE REPOSLUG COMMITSHA`](#bb-bb-commit-workspace-reposlug-commitsha)
+* [`bb bb commit list WORKSPACE REPOSLUG`](#bb-bb-commit-list-workspace-reposlug)
 * [`bb bb pipeline WORKSPACE REPOSLUG`](#bb-bb-pipeline-workspace-reposlug)
 * [`bb bb pipeline get WORKSPACE REPOSLUG PIPELINEUUID`](#bb-bb-pipeline-get-workspace-reposlug-pipelineuuid)
 * [`bb bb pipeline trigger WORKSPACE REPOSLUG`](#bb-bb-pipeline-trigger-workspace-reposlug)
 * [`bb bb pr WORKSPACE REPOSLUG PULLREQUESTID`](#bb-bb-pr-workspace-reposlug-pullrequestid)
+* [`bb bb pr activity WORKSPACE REPOSLUG PRID`](#bb-bb-pr-activity-workspace-reposlug-prid)
 * [`bb bb pr approve WORKSPACE REPOSLUG PULLREQUESTID`](#bb-bb-pr-approve-workspace-reposlug-pullrequestid)
 * [`bb bb pr comment WORKSPACE REPOSLUG PRID`](#bb-bb-pr-comment-workspace-reposlug-prid)
 * [`bb bb pr comment-delete WORKSPACE REPOSLUG PRID COMMENTID`](#bb-bb-pr-comment-delete-workspace-reposlug-prid-commentid)
@@ -54,6 +57,7 @@ USAGE
 * [`bb bb pr comment-resolve WORKSPACE REPOSLUG PRID COMMENTID`](#bb-bb-pr-comment-resolve-workspace-reposlug-prid-commentid)
 * [`bb bb pr comment-update WORKSPACE REPOSLUG PRID COMMENTID`](#bb-bb-pr-comment-update-workspace-reposlug-prid-commentid)
 * [`bb bb pr comments WORKSPACE REPOSLUG PRID`](#bb-bb-pr-comments-workspace-reposlug-prid)
+* [`bb bb pr commits WORKSPACE REPOSLUG PRID`](#bb-bb-pr-commits-workspace-reposlug-prid)
 * [`bb bb pr create WORKSPACE REPOSLUG`](#bb-bb-pr-create-workspace-reposlug)
 * [`bb bb pr decline WORKSPACE REPOSLUG PULLREQUESTID`](#bb-bb-pr-decline-workspace-reposlug-pullrequestid)
 * [`bb bb pr diff WORKSPACE REPOSLUG PULLREQUESTID`](#bb-bb-pr-diff-workspace-reposlug-pullrequestid)
@@ -74,13 +78,13 @@ Add Bitbucket authentication
 
 ```
 USAGE
-  $ bb bb auth add -p <value> -t <value> -e <value> -u <value> [--json]
+  $ bb bb auth add [--json] [-p <value>] [-t <value>] [-e <value>] [-u <value>]
 
 FLAGS
-  -e, --email=<value>     (required) Account email
-  -p, --profile=<value>   (required) Profile name
-  -t, --apiToken=<value>  (required) API Token
-  -u, --host=<value>      (required) Bitbucket instance URL
+  -e, --email=<value>     Account email
+  -p, --profile=<value>   Profile name
+  -t, --apiToken=<value>  API Token
+  -u, --host=<value>      Bitbucket instance URL
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -197,13 +201,13 @@ Update Bitbucket authentication
 
 ```
 USAGE
-  $ bb bb auth update -p <value> -t <value> -e <value> -u <value> [--json]
+  $ bb bb auth update [--json] [-p <value>] [-t <value>] [-e <value>] [-u <value>]
 
 FLAGS
-  -e, --email=<value>     (required) Account email
-  -p, --profile=<value>   (required) Profile name
-  -t, --apiToken=<value>  (required) API Token
-  -u, --host=<value>      (required) Bitbucket instance URL
+  -e, --email=<value>     Account email
+  -p, --profile=<value>   Profile name
+  -t, --apiToken=<value>  API Token
+  -u, --host=<value>      Bitbucket instance URL
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -218,6 +222,64 @@ EXAMPLES
 ```
 
 _See code: [src/commands/bb/auth/update.ts](https://github.com/hesedcasa/bb/blob/v0.8.4/src/commands/bb/auth/update.ts)_
+
+## `bb bb commit WORKSPACE REPOSLUG COMMITSHA`
+
+Get details of a specific commit
+
+```
+USAGE
+  $ bb bb commit WORKSPACE REPOSLUG COMMITSHA [-p <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE  Workspace slug or UUID
+  REPOSLUG   Repository slug
+  COMMITSHA  Commit SHA
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+      --toon             Format output as toon
+
+DESCRIPTION
+  Get details of a specific commit
+
+EXAMPLES
+  $ bb bb commit my-workspace my-repo a1b2c3d
+```
+
+_See code: [src/commands/bb/commit/index.ts](https://github.com/hesedcasa/bb/blob/v0.8.4/src/commands/bb/commit/index.ts)_
+
+## `bb bb commit list WORKSPACE REPOSLUG`
+
+List commits for a repository, optionally restricted to a range
+
+```
+USAGE
+  $ bb bb commit list WORKSPACE REPOSLUG [--exclude <value>...] [--include <value>...] [--page <value>] [--pagelen
+    <value>] [-p <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE  Workspace slug or UUID
+  REPOSLUG   Repository slug
+
+FLAGS
+  -p, --profile=<value>     Authentication profile name
+      --exclude=<value>...  Exclude commits reachable from this SHA or branch (repeatable)
+      --include=<value>...  Include commits reachable from this SHA or branch (repeatable)
+      --page=<value>        [default: 1] Page number
+      --pagelen=<value>     [default: 10] Number of items per page
+      --toon                Format output as toon
+
+DESCRIPTION
+  List commits for a repository, optionally restricted to a range
+
+EXAMPLES
+  $ bb bb commit list my-workspace my-repo
+
+  $ bb bb commit list my-workspace my-repo --include feature-branch --exclude main
+```
+
+_See code: [src/commands/bb/commit/list.ts](https://github.com/hesedcasa/bb/blob/v0.8.4/src/commands/bb/commit/list.ts)_
 
 ## `bb bb pipeline WORKSPACE REPOSLUG`
 
@@ -327,6 +389,34 @@ EXAMPLES
 ```
 
 _See code: [src/commands/bb/pr/index.ts](https://github.com/hesedcasa/bb/blob/v0.8.4/src/commands/bb/pr/index.ts)_
+
+## `bb bb pr activity WORKSPACE REPOSLUG PRID`
+
+List activity events on a pull request
+
+```
+USAGE
+  $ bb bb pr activity WORKSPACE REPOSLUG PRID [--page <value>] [--pagelen <value>] [-p <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE  Workspace slug or UUID
+  REPOSLUG   Repository slug
+  PRID       Pull request ID
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+      --page=<value>     [default: 1] Page number
+      --pagelen=<value>  [default: 10] Number of items per page
+      --toon             Format output as toon
+
+DESCRIPTION
+  List activity events on a pull request
+
+EXAMPLES
+  $ bb bb pr activity my-workspace my-repo 42
+```
+
+_See code: [src/commands/bb/pr/activity.ts](https://github.com/hesedcasa/bb/blob/v0.8.4/src/commands/bb/pr/activity.ts)_
 
 ## `bb bb pr approve WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -522,6 +612,36 @@ EXAMPLES
 ```
 
 _See code: [src/commands/bb/pr/comments.ts](https://github.com/hesedcasa/bb/blob/v0.8.4/src/commands/bb/pr/comments.ts)_
+
+## `bb bb pr commits WORKSPACE REPOSLUG PRID`
+
+List commits on a pull request
+
+```
+USAGE
+  $ bb bb pr commits WORKSPACE REPOSLUG PRID [--page <value>] [--pagelen <value>] [-p <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE  Workspace slug or UUID
+  REPOSLUG   Repository slug
+  PRID       Pull request ID
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+      --page=<value>     Opaque page token from a previous response next link
+      --pagelen=<value>  [default: 10] Number of items per page
+      --toon             Format output as toon
+
+DESCRIPTION
+  List commits on a pull request
+
+EXAMPLES
+  $ bb bb pr commits my-workspace my-repo 42
+
+  $ bb bb pr commits my-workspace my-repo 42 --page 67Fg
+```
+
+_See code: [src/commands/bb/pr/commits.ts](https://github.com/hesedcasa/bb/blob/v0.8.4/src/commands/bb/pr/commits.ts)_
 
 ## `bb bb pr create WORKSPACE REPOSLUG`
 

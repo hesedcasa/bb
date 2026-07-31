@@ -159,6 +159,16 @@ export class BitbucketApi {
   }
 
   /**
+   * Get a specific commit
+   *
+   * Uses the singular /commit/{sha} endpoint, which resolves commits that are no longer reachable
+   * from any ref -- the state branch commits end up in after a squash merge with branch deletion.
+   */
+  async getCommit(workspace: string, repoSlug: string, commitSha: string): Promise<ApiResult> {
+    return this.request(`/repositories/${workspace}/${repoSlug}/commit/${commitSha}`)
+  }
+
+  /**
    * Get the current authenticated user
    */
   async getCurrentUser(): Promise<ApiResult> {
@@ -220,6 +230,41 @@ export class BitbucketApi {
   }
 
   /**
+   * List commits for a repository, optionally restricted to a range
+   *
+   * `include` and `exclude` accept either a commit SHA or a branch name, and both may be repeated.
+   * Passing one of each yields branch-only history (everything reachable from `include` but not from
+   * `exclude`), which survives a squash merge and branch deletion.
+   *
+   * @param workspace - Workspace slug or UUID
+   * @param repoSlug - Repository slug
+   * @param page - Page number
+   * @param pagelen - Number of items per page
+   * @param include - Refs whose reachable commits are included
+   * @param exclude - Refs whose reachable commits are excluded
+   */
+  // eslint-disable-next-line max-params
+  async listCommits(
+    workspace: string,
+    repoSlug: string,
+    page = 1,
+    pagelen = 10,
+    include?: string[],
+    exclude?: string[],
+  ): Promise<ApiResult> {
+    const params = new URLSearchParams({
+      page: String(page),
+      pagelen: String(pagelen),
+    })
+
+    // append, not set: the API accepts repeated include/exclude and each one must survive.
+    for (const ref of include ?? []) params.append('include', ref)
+    for (const ref of exclude ?? []) params.append('exclude', ref)
+
+    return this.request(`/repositories/${workspace}/${repoSlug}/commits?${params.toString()}`)
+  }
+
+  /**
    * List pipelines for a repository
    */
   // eslint-disable-next-line max-params
@@ -232,6 +277,36 @@ export class BitbucketApi {
     if (sort) params.set('sort', sort)
 
     return this.request(`/repositories/${workspace}/${repoSlug}/pipelines/?${params.toString()}`)
+  }
+
+  /**
+   * List activity events on a pull request
+   *
+   * Each push emits an `update` event recording the new source tip, so the feed is the record of
+   * every branch tip the pull request ever had.
+   *
+   * @param workspace - Workspace slug or UUID
+   * @param repoSlug - Repository slug
+   * @param pullRequestId - Pull request ID
+   * @param page - Page number
+   * @param pagelen - Number of items per page
+   */
+  // eslint-disable-next-line max-params
+  async listPullRequestActivity(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    page = 1,
+    pagelen = 10,
+  ): Promise<ApiResult> {
+    const params = new URLSearchParams({
+      page: String(page),
+      pagelen: String(pagelen),
+    })
+
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/activity?${params.toString()}`,
+    )
   }
 
   /**
@@ -252,6 +327,42 @@ export class BitbucketApi {
 
     return this.request(
       `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/comments?${params.toString()}`,
+    )
+  }
+
+  /**
+   * List commits on a pull request
+   *
+   * Bitbucket only attributes commits to a pull request while its source branch still exists, so a
+   * squash-merged pull request whose branch was deleted reports just the merge commit here.
+   *
+   * Unlike the repository-level /commits endpoint, this one pages by an *opaque* token rather than a
+   * page number: a numeric `page=1` is rejected with "Invalid page". The token comes from the `page`
+   * query parameter of the previous response's `next` link (e.g. `67Fg`), so `page` is a string here
+   * and is omitted entirely for the first request.
+   *
+   * @param workspace - Workspace slug or UUID
+   * @param repoSlug - Repository slug
+   * @param pullRequestId - Pull request ID
+   * @param pagelen - Number of items per page
+   * @param page - Opaque page token from a previous response's `next` link
+   */
+  // eslint-disable-next-line max-params
+  async listPullRequestCommits(
+    workspace: string,
+    repoSlug: string,
+    pullRequestId: number,
+    pagelen = 10,
+    page?: string,
+  ): Promise<ApiResult> {
+    const params = new URLSearchParams({
+      pagelen: String(pagelen),
+    })
+
+    if (page) params.set('page', page)
+
+    return this.request(
+      `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/commits?${params.toString()}`,
     )
   }
 
