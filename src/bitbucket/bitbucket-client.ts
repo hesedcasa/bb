@@ -98,9 +98,10 @@ export async function listPullRequests(
   state?: string,
   page = 1,
   pagelen = 10,
+  q?: string,
 ): Promise<ApiResult> {
   const bb = await getClient(config)
-  return bb.listPullRequests(workspace, repoSlug, state, page, pagelen)
+  return bb.listPullRequests(workspace, repoSlug, state, page, pagelen, q)
 }
 
 export async function getPullRequest(

@@ -376,6 +376,7 @@ export class BitbucketApi {
     state?: string,
     page = 1,
     pagelen = 10,
+    q?: string,
   ): Promise<ApiResult> {
     const params = new URLSearchParams({
       page: String(page),
@@ -383,6 +384,7 @@ export class BitbucketApi {
     })
 
     if (state) params.set('state', state)
+    if (q) params.set('q', q)
 
     return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests?${params.toString()}`)
   }
