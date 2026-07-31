@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/hesedcasa/bb/compare/v0.9.0...v0.10.0) (2026-07-31)
+
+
+### 🎉 Features
+
+* add query string filter to pr:list command ([#104](https://github.com/hesedcasa/bb/issues/104)) ([0278330](https://github.com/hesedcasa/bb/commit/02783306c34b4c2f2be395aafdc0d0aaaf604f48))
+
 ## [0.9.0](https://github.com/hesedcasa/bb/compare/v0.8.4...v0.9.0) (2026-07-31)
 
 
