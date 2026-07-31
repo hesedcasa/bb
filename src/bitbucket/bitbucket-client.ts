@@ -39,6 +39,30 @@ export async function getRepository(config: AuthConfig, workspace: string, repoS
   return bb.getRepository(workspace, repoSlug)
 }
 
+export async function getCommit(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  commitSha: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.getCommit(workspace, repoSlug, commitSha)
+}
+
+// eslint-disable-next-line max-params
+export async function listCommits(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  page = 1,
+  pagelen = 10,
+  include?: string[],
+  exclude?: string[],
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.listCommits(workspace, repoSlug, page, pagelen, include, exclude)
+}
+
 export async function createRepository(
   config: AuthConfig,
   workspace: string,
@@ -229,6 +253,32 @@ export async function listPullRequestComments(
 ): Promise<ApiResult> {
   const bb = await getClient(config)
   return bb.listPullRequestComments(workspace, repoSlug, pullRequestId, page, pagelen)
+}
+
+// eslint-disable-next-line max-params
+export async function listPullRequestCommits(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  pagelen = 10,
+  page?: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.listPullRequestCommits(workspace, repoSlug, pullRequestId, pagelen, page)
+}
+
+// eslint-disable-next-line max-params
+export async function listPullRequestActivity(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pullRequestId: number,
+  page = 1,
+  pagelen = 10,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.listPullRequestActivity(workspace, repoSlug, pullRequestId, page, pagelen)
 }
 
 // eslint-disable-next-line max-params
