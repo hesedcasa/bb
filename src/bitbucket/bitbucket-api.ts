@@ -5,7 +5,7 @@ import {type ApiResult, type AuthConfig, buildAuthHeader} from '@hesed/plugin-li
  * Provides core Bitbucket REST API operations
  */
 export class BitbucketApi {
-  private config: AuthConfig
+  private readonly config: AuthConfig
 
   constructor(config: AuthConfig) {
     this.config = config
@@ -39,11 +39,11 @@ export class BitbucketApi {
     destinationBranch: string,
     description?: string,
     reviewers?: string[],
-    autoAddReviewers = true,
+    shouldAutoAddReviewers = true,
   ): Promise<ApiResult> {
     let finalReviewers = reviewers
 
-    if (autoAddReviewers) {
+    if (shouldAutoAddReviewers) {
       const [currentUser, defaultReviewers] = await Promise.all([
         this.getCurrentUser(),
         this.getDefaultReviewers(workspace, repoSlug),
@@ -115,7 +115,6 @@ export class BitbucketApi {
     }
 
     if (options?.description) body.description = options.description
-    // eslint-disable-next-line camelcase
     if (options?.isPrivate !== undefined) body.is_private = options.isPrivate
     if (options?.language) body.language = options.language
     if (options?.projectKey) body.project = {key: options.projectKey}
@@ -426,15 +425,13 @@ export class BitbucketApi {
     repoSlug: string,
     pullRequestId: number,
     mergeStrategy?: string,
-    closeSrcBranch?: boolean,
+    shouldCloseSrcBranch?: boolean,
     message?: string,
   ): Promise<ApiResult> {
     const body: Record<string, unknown> = {}
 
-    // eslint-disable-next-line camelcase
     if (mergeStrategy) body.merge_strategy = mergeStrategy
-    // eslint-disable-next-line camelcase
-    if (closeSrcBranch !== undefined) body.close_source_branch = closeSrcBranch
+    if (shouldCloseSrcBranch !== undefined) body.close_source_branch = shouldCloseSrcBranch
     if (message) body.message = message
 
     return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}/merge`, {
@@ -497,9 +494,7 @@ export class BitbucketApi {
   ): Promise<ApiResult> {
     const body: Record<string, unknown> = {
       target: {
-        // eslint-disable-next-line camelcase
         ref_name: target.refName,
-        // eslint-disable-next-line camelcase
         ref_type: target.refType,
         type: 'pipeline_ref_target',
       },
@@ -589,7 +584,6 @@ export class BitbucketApi {
         headers['Content-Type'] = 'application/json'
       }
 
-      // eslint-disable-next-line n/no-unsupported-features/node-builtins -- fetch is available in Node 18+
       const response = await fetch(url, {
         body: options?.body,
         headers,
@@ -645,8 +639,7 @@ export class BitbucketApi {
         Authorization: this.getAuthHeader(),
       }
 
-      // eslint-disable-next-line n/no-unsupported-features/node-builtins -- fetch is available in Node 18+
-      const response = await fetch(url, {headers, method: 'GET'})
+      const response = await fetch(url, {headers})
 
       if (!response.ok) {
         const errorText = await response.text()

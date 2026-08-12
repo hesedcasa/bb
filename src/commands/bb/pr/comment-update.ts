@@ -5,18 +5,20 @@ import {BaseCommand} from '../../../base-command.js'
 import {clearClients, updatePullRequestComment} from '../../../bitbucket/bitbucket-client.js'
 
 export default class PrCommentUpdate extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
     prId: Args.integer({description: 'Pull request ID', required: true}),
     commentId: Args.integer({description: 'Comment ID to update', required: true}),
   }
+
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'Update a comment on a pull request'
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-workspace my-repo 42 100 --body "Updated comment text"',
   ]
+
   static override flags = {
     body: Flags.string({description: 'New comment text', required: true}),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),

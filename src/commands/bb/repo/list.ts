@@ -8,6 +8,7 @@ export default class RepoList extends BaseCommand {
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
   }
+
   static override description = 'List repositories in a workspace'
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace']
   static override flags = {

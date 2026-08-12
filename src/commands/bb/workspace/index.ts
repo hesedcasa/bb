@@ -8,6 +8,7 @@ export default class WorkspaceGet extends BaseCommand {
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
   }
+
   static override description = 'Get details of a specific workspace'
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace']
   static override flags = {

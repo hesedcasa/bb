@@ -5,17 +5,19 @@ import {BaseCommand} from '../../../base-command.js'
 import {clearClients, listCommits} from '../../../bitbucket/bitbucket-client.js'
 
 export default class CommitList extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
   }
+
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'List commits for a repository, optionally restricted to a range'
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-workspace my-repo',
     '<%= config.bin %> <%= command.id %> my-workspace my-repo --include feature-branch --exclude main',
   ]
+
   static override flags = {
     exclude: Flags.string({
       description: 'Exclude commits reachable from this SHA or branch (repeatable)',

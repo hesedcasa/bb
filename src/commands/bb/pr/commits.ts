@@ -5,18 +5,20 @@ import {BaseCommand} from '../../../base-command.js'
 import {clearClients, listPullRequestCommits} from '../../../bitbucket/bitbucket-client.js'
 
 export default class PrCommits extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
     prId: Args.integer({description: 'Pull request ID', required: true}),
   }
+
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'List commits on a pull request'
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-workspace my-repo 42',
     '<%= config.bin %> <%= command.id %> my-workspace my-repo 42 --page 67Fg',
   ]
+
   static override flags = {
     // This endpoint pages by an opaque token from the previous response's `next` link, not by a page
     // number -- a numeric page is rejected with "Invalid page".

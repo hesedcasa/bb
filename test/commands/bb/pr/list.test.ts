@@ -44,7 +44,15 @@ describe('pr:list', () => {
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listPullRequestsStub.calledOnce).to.be.true
-    expect(listPullRequestsStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', undefined, 1, 10, undefined])
+    expect(listPullRequestsStub.firstCall.args).to.deep.equal([
+      mockAuth,
+      'my-ws',
+      'my-repo',
+      undefined,
+      1,
+      10,
+      undefined,
+    ])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(result).to.deep.equal(mockResult)
   })
@@ -91,7 +99,15 @@ describe('pr:list', () => {
     await cmd.run()
 
     expect(listPullRequestsStub.calledOnce).to.be.true
-    expect(listPullRequestsStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', undefined, 1, 10, undefined])
+    expect(listPullRequestsStub.firstCall.args).to.deep.equal([
+      mockAuth,
+      'my-ws',
+      'my-repo',
+      undefined,
+      1,
+      10,
+      undefined,
+    ])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(formatAsToonStub.calledOnce).to.be.true
     expect(formatAsToonStub.firstCall.args[0]).to.deep.equal(mockResult)

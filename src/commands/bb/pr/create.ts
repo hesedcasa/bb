@@ -5,16 +5,18 @@ import {BaseCommand} from '../../../base-command.js'
 import {clearClients, createPullRequest} from '../../../bitbucket/bitbucket-client.js'
 
 export default class PrCreate extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
   }
+
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'Create a new pull request'
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-workspace my-repo --title "My PR" --source feature-branch --destination main',
   ]
+
   static override flags = {
     description: Flags.string({description: 'Pull request description', required: false}),
     destination: Flags.string({description: 'Destination branch name', required: true}),
