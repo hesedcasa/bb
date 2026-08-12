@@ -16,7 +16,6 @@ describe('repo:create', () => {
     host: 'https://bitbucket.org',
   }
 
-  // eslint-disable-next-line camelcase
   const mockResult = {data: {full_name: 'my-ws/my-repo', slug: 'my-repo'}, success: true}
 
   beforeEach(async () => {

@@ -1,5 +1,5 @@
-/* eslint-disable n/no-unsupported-features/node-builtins */
 import {expect} from 'chai'
+import {Buffer} from 'node:buffer'
 import {type SinonStub, stub} from 'sinon'
 
 import {BitbucketApi} from '../../src/bitbucket/bitbucket-api.js'
@@ -33,7 +33,7 @@ describe('BitbucketApi', () => {
   describe('request internals', () => {
     it('sends correct authorization header', async () => {
       const expectedAuth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64')
-      fetchStub.resolves(new Response(JSON.stringify({slug: 'test'}), {status: 200}))
+      fetchStub.resolves(Response.json({slug: 'test'}, {status: 200}))
 
       await api.getRepository('ws', 'repo')
 
@@ -42,7 +42,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends Accept: application/json header', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.getRepository('ws', 'repo')
 
@@ -51,7 +51,7 @@ describe('BitbucketApi', () => {
     })
 
     it('uses hardcoded base URL', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.getRepository('ws', 'repo')
 
@@ -61,7 +61,7 @@ describe('BitbucketApi', () => {
 
     it('returns success with parsed JSON on 200 response', async () => {
       const responseData = {name: 'My Repo', slug: 'my-repo'}
-      fetchStub.resolves(new Response(JSON.stringify(responseData), {status: 200}))
+      fetchStub.resolves(Response.json(responseData, {status: 200}))
 
       const result = await api.getRepository('ws', 'my-repo')
 
@@ -85,7 +85,7 @@ describe('BitbucketApi', () => {
 
     it('returns error with parsed JSON on non-OK response with JSON body', async () => {
       const errorBody = {error: {message: 'Not Found'}}
-      fetchStub.resolves(new Response(JSON.stringify(errorBody), {status: 404}))
+      fetchStub.resolves(Response.json(errorBody, {status: 404}))
 
       const result = await api.getRepository('ws', 'nonexistent')
 
@@ -122,7 +122,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sets Content-Type when body is present', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 200}))
 
       await api.createRepository('ws', 'new-repo')
 
@@ -131,7 +131,7 @@ describe('BitbucketApi', () => {
     })
 
     it('does not set Content-Type when no body is present', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.getRepository('ws', 'repo')
 
@@ -142,7 +142,7 @@ describe('BitbucketApi', () => {
 
   describe('testConnection', () => {
     it('calls GET /user/workspaces', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       const result = await api.testConnection()
 
@@ -155,7 +155,7 @@ describe('BitbucketApi', () => {
 
   describe('getWorkspace', () => {
     it('calls GET /workspaces/:workspace', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({slug: 'my-ws'}), {status: 200}))
+      fetchStub.resolves(Response.json({slug: 'my-ws'}, {status: 200}))
 
       await api.getWorkspace('my-ws')
 
@@ -167,7 +167,7 @@ describe('BitbucketApi', () => {
 
   describe('listWorkspaces', () => {
     it('calls GET /workspaces with pagination params', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listWorkspaces(2, 25)
 
@@ -178,7 +178,7 @@ describe('BitbucketApi', () => {
     })
 
     it('uses default pagination', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listWorkspaces()
 
@@ -190,7 +190,7 @@ describe('BitbucketApi', () => {
 
   describe('getRepository', () => {
     it('calls GET /repositories/:workspace/:repoSlug', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({slug: 'repo'}), {status: 200}))
+      fetchStub.resolves(Response.json({slug: 'repo'}, {status: 200}))
 
       await api.getRepository('ws', 'repo')
 
@@ -202,7 +202,7 @@ describe('BitbucketApi', () => {
 
   describe('listRepositories', () => {
     it('calls GET /repositories/:workspace with pagination', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listRepositories('ws', 2, 20)
 
@@ -213,7 +213,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes role filter when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listRepositories('ws', 1, 10, 'admin')
 
@@ -222,7 +222,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes query filter when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listRepositories('ws', 1, 10, undefined, 'name~"test"')
 
@@ -231,7 +231,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits role and q when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listRepositories('ws')
 
@@ -243,7 +243,7 @@ describe('BitbucketApi', () => {
 
   describe('createRepository', () => {
     it('calls PUT /repositories/:workspace/:repoSlug', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({slug: 'new-repo'}), {status: 200}))
+      fetchStub.resolves(Response.json({slug: 'new-repo'}, {status: 200}))
 
       await api.createRepository('ws', 'new-repo')
 
@@ -253,7 +253,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends scm=git in body', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.createRepository('ws', 'new-repo')
 
@@ -263,7 +263,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes optional fields when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.createRepository('ws', 'new-repo', {
         description: 'My repo',
@@ -281,7 +281,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits optional fields when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.createRepository('ws', 'new-repo')
 
@@ -312,7 +312,7 @@ describe('BitbucketApi', () => {
 
   describe('getPullRequest', () => {
     it('calls GET /repositories/:workspace/:repoSlug/pullrequests/:id', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 200}))
 
       await api.getPullRequest('ws', 'repo', 1)
 
@@ -324,7 +324,7 @@ describe('BitbucketApi', () => {
 
   describe('listPullRequests', () => {
     it('calls GET with pagination params', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequests('ws', 'repo', undefined, 2, 20)
 
@@ -335,7 +335,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes state filter when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequests('ws', 'repo', 'OPEN')
 
@@ -344,7 +344,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits state when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequests('ws', 'repo')
 
@@ -355,7 +355,7 @@ describe('BitbucketApi', () => {
 
   describe('getCommit', () => {
     it('calls GET /repositories/:workspace/:repoSlug/commit/:sha', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({hash: 'abc123'}), {status: 200}))
+      fetchStub.resolves(Response.json({hash: 'abc123'}, {status: 200}))
 
       await api.getCommit('ws', 'repo', 'abc123')
 
@@ -365,7 +365,7 @@ describe('BitbucketApi', () => {
     })
 
     it('returns the parsed commit on success', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({author: {raw: 'A <a@b.c>'}, hash: 'abc123'}), {status: 200}))
+      fetchStub.resolves(Response.json({author: {raw: 'A <a@b.c>'}, hash: 'abc123'}, {status: 200}))
 
       const result = await api.getCommit('ws', 'repo', 'abc123')
 
@@ -374,7 +374,7 @@ describe('BitbucketApi', () => {
     })
 
     it('reports failure without throwing when the commit is missing', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({error: {message: 'Commit not found'}}), {status: 404}))
+      fetchStub.resolves(Response.json({error: {message: 'Commit not found'}}, {status: 404}))
 
       const result = await api.getCommit('ws', 'repo', 'nope')
 
@@ -385,7 +385,7 @@ describe('BitbucketApi', () => {
 
   describe('listCommits', () => {
     it('calls GET with pagination params', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listCommits('ws', 'repo', 2, 20)
 
@@ -396,7 +396,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits include and exclude when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listCommits('ws', 'repo')
 
@@ -406,7 +406,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes a single include/exclude pair when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listCommits('ws', 'repo', 1, 10, ['feature-x'], ['master'])
 
@@ -416,7 +416,7 @@ describe('BitbucketApi', () => {
     })
 
     it('preserves every repeated include and exclude ref', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listCommits('ws', 'repo', 1, 10, ['aaa111', 'bbb222'], ['ccc333', 'ddd444'])
 
@@ -430,7 +430,7 @@ describe('BitbucketApi', () => {
 
   describe('listPullRequestCommits', () => {
     it('calls GET /pullrequests/:id/commits with pagelen', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestCommits('ws', 'repo', 42, 25)
 
@@ -441,7 +441,7 @@ describe('BitbucketApi', () => {
 
     // The endpoint rejects a numeric page with "Invalid page", so the first request must send none.
     it('omits page entirely when no token is provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestCommits('ws', 'repo', 42)
 
@@ -451,7 +451,7 @@ describe('BitbucketApi', () => {
     })
 
     it('passes an opaque page token through unchanged', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestCommits('ws', 'repo', 42, 10, '67Fg')
 
@@ -462,7 +462,7 @@ describe('BitbucketApi', () => {
 
   describe('listPullRequestActivity', () => {
     it('calls GET /pullrequests/:id/activity with pagination params', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestActivity('ws', 'repo', 42, 3, 50)
 
@@ -473,7 +473,7 @@ describe('BitbucketApi', () => {
     })
 
     it('defaults pagination when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestActivity('ws', 'repo', 42)
 
@@ -485,7 +485,7 @@ describe('BitbucketApi', () => {
 
   describe('createPullRequest', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
 
       await api.createPullRequest('ws', 'repo', 'My PR', 'feature', 'main', undefined, undefined, false)
 
@@ -495,7 +495,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends correct body with required fields', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
 
       await api.createPullRequest('ws', 'repo', 'My PR', 'feature', 'main', undefined, undefined, false)
 
@@ -507,7 +507,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes description when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
 
       await api.createPullRequest('ws', 'repo', 'PR', 'feat', 'main', 'A description', undefined, false)
 
@@ -517,7 +517,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits description when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
 
       await api.createPullRequest('ws', 'repo', 'PR', 'feat', 'main', undefined, undefined, false)
 
@@ -527,7 +527,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes reviewers when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
 
       await api.createPullRequest('ws', 'repo', 'PR', 'feat', 'main', undefined, ['{uuid-1}', '{uuid-2}'], false)
 
@@ -537,7 +537,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits reviewers when empty array', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
 
       await api.createPullRequest('ws', 'repo', 'PR', 'feat', 'main', undefined, [], false)
 
@@ -549,7 +549,7 @@ describe('BitbucketApi', () => {
 
   describe('updatePullRequest', () => {
     it('calls PUT /repositories/:workspace/:repoSlug/pullrequests/:id', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 200}))
 
       await api.updatePullRequest('ws', 'repo', 1, {title: 'Updated'})
 
@@ -563,7 +563,7 @@ describe('BitbucketApi', () => {
 
   describe('mergePullRequest', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/merge', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 1}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 1}, {status: 200}))
 
       await api.mergePullRequest('ws', 'repo', 1)
 
@@ -573,7 +573,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends empty body when no options provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.mergePullRequest('ws', 'repo', 1)
 
@@ -582,7 +582,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes merge_strategy when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.mergePullRequest('ws', 'repo', 1, 'squash')
 
@@ -592,7 +592,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes close_source_branch when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.mergePullRequest('ws', 'repo', 1, undefined, true)
 
@@ -602,7 +602,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes message when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.mergePullRequest('ws', 'repo', 1, undefined, undefined, 'Merge commit msg')
 
@@ -614,7 +614,7 @@ describe('BitbucketApi', () => {
 
   describe('approvePullRequest', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/approve', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({approved: true}), {status: 200}))
+      fetchStub.resolves(Response.json({approved: true}, {status: 200}))
 
       await api.approvePullRequest('ws', 'repo', 42)
 
@@ -642,7 +642,7 @@ describe('BitbucketApi', () => {
 
   describe('declinePullRequest', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/decline', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 200}))
+      fetchStub.resolves(Response.json({}, {status: 200}))
 
       await api.declinePullRequest('ws', 'repo', 5)
 
@@ -654,7 +654,7 @@ describe('BitbucketApi', () => {
 
   describe('createPullRequestComment', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 10}, {status: 201}))
 
       await api.createPullRequestComment('ws', 'repo', 42, 'Looks good')
 
@@ -664,7 +664,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends content.raw in body', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 10}, {status: 201}))
 
       await api.createPullRequestComment('ws', 'repo', 42, 'Looks good')
 
@@ -674,7 +674,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes inline when path and line are provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 10}, {status: 201}))
 
       await api.createPullRequestComment('ws', 'repo', 42, 'Fix this', {line: 15, path: 'src/foo.ts'})
 
@@ -684,7 +684,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits inline when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 10}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 10}, {status: 201}))
 
       await api.createPullRequestComment('ws', 'repo', 42, 'General comment')
 
@@ -696,7 +696,7 @@ describe('BitbucketApi', () => {
 
   describe('listPullRequestComments', () => {
     it('calls GET /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestComments('ws', 'repo', 42)
 
@@ -705,7 +705,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes pagination params', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestComments('ws', 'repo', 42, 2, 25)
 
@@ -715,7 +715,7 @@ describe('BitbucketApi', () => {
     })
 
     it('uses default pagination when not specified', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPullRequestComments('ws', 'repo', 42)
 
@@ -739,7 +739,7 @@ describe('BitbucketApi', () => {
 
   describe('updatePullRequestComment', () => {
     it('calls PUT /repositories/:workspace/:repoSlug/pullrequests/:id/comments/:commentId', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 100}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 100}, {status: 200}))
 
       await api.updatePullRequestComment('ws', 'repo', 42, 100, 'Updated text')
 
@@ -749,7 +749,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends content.raw in body', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 100}), {status: 200}))
+      fetchStub.resolves(Response.json({id: 100}, {status: 200}))
 
       await api.updatePullRequestComment('ws', 'repo', 42, 100, 'Updated text')
 
@@ -761,7 +761,7 @@ describe('BitbucketApi', () => {
 
   describe('replyToPullRequestComment', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pullrequests/:id/comments', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 200}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 200}, {status: 201}))
 
       await api.replyToPullRequestComment('ws', 'repo', 42, 100, 'Thanks!')
 
@@ -771,7 +771,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends content.raw and parent.id in body', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({id: 200}), {status: 201}))
+      fetchStub.resolves(Response.json({id: 200}, {status: 201}))
 
       await api.replyToPullRequestComment('ws', 'repo', 42, 100, 'Thanks!')
 
@@ -784,7 +784,7 @@ describe('BitbucketApi', () => {
 
   describe('getPipeline', () => {
     it('calls GET /repositories/:workspace/:repoSlug/pipelines/:uuid', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({uuid: '{pipe-1}'}), {status: 200}))
+      fetchStub.resolves(Response.json({uuid: '{pipe-1}'}, {status: 200}))
 
       await api.getPipeline('ws', 'repo', '{pipe-1}')
 
@@ -796,7 +796,7 @@ describe('BitbucketApi', () => {
 
   describe('listPipelines', () => {
     it('calls GET with pagination params', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPipelines('ws', 'repo', 3, 15)
 
@@ -807,7 +807,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes sort when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPipelines('ws', 'repo', 1, 10, '-created_on')
 
@@ -816,7 +816,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits sort when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({values: []}), {status: 200}))
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPipelines('ws', 'repo')
 
@@ -827,7 +827,7 @@ describe('BitbucketApi', () => {
 
   describe('triggerPipeline', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pipelines/', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({uuid: '{new}'}), {status: 201}))
+      fetchStub.resolves(Response.json({uuid: '{new}'}, {status: 201}))
 
       await api.triggerPipeline('ws', 'repo', {refName: 'main', refType: 'branch'})
 
@@ -837,7 +837,7 @@ describe('BitbucketApi', () => {
     })
 
     it('sends correct target body', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 201}))
+      fetchStub.resolves(Response.json({}, {status: 201}))
 
       await api.triggerPipeline('ws', 'repo', {refName: 'main', refType: 'branch'})
 
@@ -849,7 +849,7 @@ describe('BitbucketApi', () => {
     })
 
     it('includes selector when provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 201}))
+      fetchStub.resolves(Response.json({}, {status: 201}))
 
       await api.triggerPipeline('ws', 'repo', {
         refName: 'main',
@@ -863,7 +863,7 @@ describe('BitbucketApi', () => {
     })
 
     it('defaults selector type to custom', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 201}))
+      fetchStub.resolves(Response.json({}, {status: 201}))
 
       await api.triggerPipeline('ws', 'repo', {
         refName: 'main',
@@ -877,7 +877,7 @@ describe('BitbucketApi', () => {
     })
 
     it('omits selector when not provided', async () => {
-      fetchStub.resolves(new Response(JSON.stringify({}), {status: 201}))
+      fetchStub.resolves(Response.json({}, {status: 201}))
 
       await api.triggerPipeline('ws', 'repo', {refName: 'main', refType: 'branch'})
 

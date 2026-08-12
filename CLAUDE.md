@@ -98,7 +98,7 @@ import {readConfig} from '../../../config.js'
 import {formatAsToon} from '../../../format.js'
 
 export default class RepoGet extends Command {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
@@ -208,10 +208,10 @@ fetchStub.resolves(new Response(JSON.stringify({...}), {status: 200}))
 - The Bitbucket REST API base URL is always hardcoded to `https://api.bitbucket.org/2.0`; the `host` field in config is not used for API requests
 - Functions with more than 3 parameters require `// eslint-disable-next-line max-params` above the function signature
 - JSDoc `@param` for inline object parameters must list each property individually with dot-notation (e.g. `@param options.description`) to satisfy the JSDoc linter
-- The `static override args` block in commands must be wrapped with `/* eslint-disable/enable perfectionist/sort-objects */` because Oclif processes args positionally (declaration order = parse order), preventing alphabetical sorting
+- The `static override args` block in commands must be wrapped with `/* eslint-disable/enable perfectionist/sort-objects */` because Oclif processes args positionally (declaration order = parse order), preventing alphabetical sorting. The `eslint-disable` needs a `-- <reason>` description to satisfy `@eslint-community/eslint-comments/require-description`
 - Pre-commit hook (`npm run pre-commit`) runs format and dead code detection; also runs automatically via git hooks
 - Uses `shx` for cross-platform shell commands
-- Node.js >=18.0.0 required
+- Node.js >=22.0.0 required (ESLint 10 and eslint-plugin-unicorn need Node 22+)
 - Published as npm package `bb`
 
 ## Commit Message Convention

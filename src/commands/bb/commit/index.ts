@@ -5,12 +5,13 @@ import {BaseCommand} from '../../../base-command.js'
 import {clearClients, getCommit} from '../../../bitbucket/bitbucket-client.js'
 
 export default class CommitGet extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
     commitSha: Args.string({description: 'Commit SHA', required: true}),
   }
+
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'Get details of a specific commit'
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo a1b2c3d']

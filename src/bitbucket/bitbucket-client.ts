@@ -124,7 +124,7 @@ export async function createPullRequest(
   destinationBranch: string,
   description?: string,
   reviewers?: string[],
-  autoAddReviewers = true,
+  shouldAutoAddReviewers = true,
 ): Promise<ApiResult> {
   const bb = await getClient(config)
   return bb.createPullRequest(
@@ -135,7 +135,7 @@ export async function createPullRequest(
     destinationBranch,
     description,
     reviewers,
-    autoAddReviewers,
+    shouldAutoAddReviewers,
   )
 }
 
@@ -183,11 +183,11 @@ export async function mergePullRequest(
   repoSlug: string,
   pullRequestId: number,
   mergeStrategy?: string,
-  closeSrcBranch?: boolean,
+  shouldCloseSrcBranch?: boolean,
   message?: string,
 ): Promise<ApiResult> {
   const bb = await getClient(config)
-  return bb.mergePullRequest(workspace, repoSlug, pullRequestId, mergeStrategy, closeSrcBranch, message)
+  return bb.mergePullRequest(workspace, repoSlug, pullRequestId, mergeStrategy, shouldCloseSrcBranch, message)
 }
 
 // eslint-disable-next-line max-params

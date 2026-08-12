@@ -5,12 +5,13 @@ import {BaseCommand} from '../../../base-command.js'
 import {clearClients, getPullRequest} from '../../../bitbucket/bitbucket-client.js'
 
 export default class PrGet extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
     pullRequestId: Args.integer({description: 'Pull request ID', required: true}),
   }
+
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'Get details of a specific pull request'
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo 123']

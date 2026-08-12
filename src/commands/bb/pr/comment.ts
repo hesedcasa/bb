@@ -5,18 +5,20 @@ import {BaseCommand} from '../../../base-command.js'
 import {clearClients, createPullRequestComment} from '../../../bitbucket/bitbucket-client.js'
 
 export default class PrComment extends BaseCommand {
-  /* eslint-disable perfectionist/sort-objects */
+  /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
   static override args = {
     workspace: Args.string({description: 'Workspace slug or UUID', required: true}),
     repoSlug: Args.string({description: 'Repository slug', required: true}),
     prId: Args.integer({description: 'Pull request ID', required: true}),
   }
+
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'Add a comment to a pull request, optionally on a specific file and line'
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-workspace my-repo 42 --body "Looks good!"',
     '<%= config.bin %> <%= command.id %> my-workspace my-repo 42 --body "Fix this" --file src/foo.ts --line 15',
   ]
+
   static override flags = {
     body: Flags.string({description: 'Comment text', required: true}),
     file: Flags.string({description: 'File path for inline comment', required: false}),
