@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/hesedcasa/bb/compare/v0.10.0...v0.10.1) (2026-08-12)
+
+
+### ♻️ Chores
+
+* upgrade ESLint and fix TypeScript compilation errors ([#109](https://github.com/hesedcasa/bb/issues/109)) ([b806249](https://github.com/hesedcasa/bb/commit/b8062493bd480bf54ee79a3609824258dad8831c))
+
 ## [0.10.0](https://github.com/hesedcasa/bb/compare/v0.9.0...v0.10.0) (2026-07-31)
 
 
