@@ -16,8 +16,13 @@ const config = [
   // Disable type-checked (type-aware) rules for test files. Test fixtures and
   // mocks don't need full type information and shouldn't fail type-aware rules
   // such as no-unsafe-* / no-base-to-string. Mirrors plugin-lib#63.
+  //
+  // scripts/ gets the same treatment: it holds standalone maintenance scripts
+  // (e.g. the stale-fixture sweep) that run via ts-node and aren't part of the
+  // src/ build project, so there is no tsconfig for the type-aware project
+  // service to resolve them against.
   {
-    files: ['test/**/*.ts'],
+    files: ['test/**/*.ts', 'scripts/**/*.ts'],
     ...tseslint.configs.disableTypeChecked,
   },
   // eslint.config.mjs references typescript-eslint's API, which is a transitive
