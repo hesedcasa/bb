@@ -62,6 +62,50 @@ function assertStatus(what: string, status: number, body: unknown, expected: num
 }
 
 /**
+ * Reads the commit hash a branch points at.
+ *
+ * The src upload endpoint answers 201 with an empty body — no commit hash to
+ * parse — so every hash this suite needs is read back from the branch tip
+ * instead. Bitbucket reads are immediately consistent, so the tip is the
+ * commit that was just uploaded; no polling.
+ *
+ * @param repo The repository API path, e.g. `/repositories/<ws>/<slug>`.
+ * @param branch The branch whose tip to read.
+ * @returns The full commit hash.
+ */
+async function tipSha(repo: string, branch: string): Promise<string> {
+  const {body, status} = await call('GET', `${repo}/commits/${branch}?pagelen=1`)
+  assertStatus(`tipSha ${branch}`, status, body, [200])
+  const hash = (body as {values?: Array<{hash?: string}>}).values?.[0]?.hash
+  if (!hash) {
+    throw new Error(`tipSha ${branch} failed: commit list carried no hash`)
+  }
+
+  return hash
+}
+
+/**
+ * Reads a repo's default branch name from its `mainbranch` field.
+ *
+ * Not a constant: the sandbox workspace defaults new repos to `master`, and a
+ * hardcoded `main` would break the tip lookup above.
+ *
+ * @param repo The repository API path, e.g. `/repositories/<ws>/<slug>`.
+ * @param slug The repository slug, for error messages.
+ * @returns The default branch name.
+ */
+async function defaultBranchName(repo: string, slug: string): Promise<string> {
+  const {body, status} = await call('GET', repo)
+  assertStatus(`seedRepo ${slug} repo read`, status, body, [200])
+  const name = (body as {mainbranch?: {name?: string}}).mainbranch?.name
+  if (!name) {
+    throw new Error(`seedRepo ${slug} failed: repository response carries no mainbranch`)
+  }
+
+  return name
+}
+
+/**
  * Creates a fixture repository via the REST API directly.
  *
  * Fixtures are never created through the CLI: they are the oracle the CLI is
@@ -70,9 +114,14 @@ function assertStatus(what: string, status: number, body: unknown, expected: num
  * so PR tests have a real diff without needing git installed.
  *
  * @param purpose Short suffix for the repo name, after the run prefix.
- * @returns The slug plus both commit hashes.
+ * @returns The slug, the repo's default branch name, and both commit hashes.
  */
-export async function seedRepo(purpose: string): Promise<{featureSha: string; mainSha: string; slug: string}> {
+export async function seedRepo(purpose: string): Promise<{
+  defaultBranch: string
+  featureSha: string
+  mainSha: string
+  slug: string
+}> {
   const {workspace} = requireEnv()
   const slug = `${RUN_PREFIX}${purpose}`
   const repo = `/repositories/${workspace}/${slug}`
@@ -82,13 +131,15 @@ export async function seedRepo(purpose: string): Promise<{featureSha: string; ma
   })
   assertStatus(`seedRepo ${slug}`, created.status, created.body, [200, 201])
 
-  // First commit lands on the default branch (main) and is what makes the
-  // repo readable by the commit commands.
+  // First commit lands on the default branch and is what makes the repo
+  // readable by the commit commands. The src endpoint answers 201 with an
+  // empty body, so the commit's hash is read back from the branch tip.
   const readme = new FormData()
   readme.append('README.md', `# e2e fixture\n\nCreated by the bb e2e suite, run ${RUN_ID}.\n`)
   const mainCommit = await call('POST', `${repo}/src`, {form: readme})
   assertStatus(`seedRepo ${slug} main commit`, mainCommit.status, mainCommit.body, [201])
-  const mainSha = (mainCommit.body as {hash?: string}).hash ?? ''
+  const defaultBranch = await defaultBranchName(repo, slug)
+  const mainSha = await tipSha(repo, defaultBranch)
 
   const branch = await call('POST', `${repo}/refs/branches`, {
     body: {name: FEATURE_BRANCH, target: {hash: mainSha}},
@@ -101,9 +152,9 @@ export async function seedRepo(purpose: string): Promise<{featureSha: string; ma
   feature.append('feature.txt', `feature file for run ${RUN_ID}\n`)
   const featureCommit = await call('POST', `${repo}/src`, {form: feature})
   assertStatus(`seedRepo ${slug} feature commit`, featureCommit.status, featureCommit.body, [201])
-  const featureSha = (featureCommit.body as {hash?: string}).hash ?? ''
+  const featureSha = await tipSha(repo, FEATURE_BRANCH)
 
-  return {featureSha, mainSha, slug}
+  return {defaultBranch, featureSha, mainSha, slug}
 }
 
 /**
