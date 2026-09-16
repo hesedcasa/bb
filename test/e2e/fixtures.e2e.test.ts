@@ -51,9 +51,11 @@ describe('e2e: fixtures', () => {
   })
 
   it('leaves fresh fixtures alone in the stale sweep', async () => {
-    await seedRepo('fixtures-fresh')
-    const deleted = await sweepStale()
-    expect(deleted, 'sweep must not touch fixtures younger than an hour').to.equal(0)
+    const fresh = await seedRepo('fixtures-fresh')
+    await sweepStale()
+    // Surviving the sweep is the assertion; a bare `deleted === 0` would also
+    // pass if the sweep deleted everything and miscounted.
+    expect(await repoHttpStatus(fresh.slug), 'sweep must not touch fixtures younger than an hour').to.equal(200)
   })
 
   it('created the feature branch named for PR tests', async () => {

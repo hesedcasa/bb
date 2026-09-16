@@ -17,11 +17,16 @@ concurrency:
 jobs:
   run-e2e-tests:
     name: End-to-end tests against the Bitbucket sandbox
+    # workflow_dispatch can otherwise be pointed at any ref by anyone with
+    # write access, handing the sandbox secrets to whatever code sits on that
+    # ref. The schedule always runs; dispatch runs only against main. A
+    # required-reviewer GitHub Environment would be the stronger gate.
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 2
           # Nothing here pushes, and the default would leave GITHUB_TOKEN in
@@ -29,7 +34,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           cache: npm
           node-version-file: '.nvmrc'

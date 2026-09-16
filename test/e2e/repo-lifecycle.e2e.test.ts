@@ -1,7 +1,7 @@
 import {expect} from 'chai'
 
-import {cleanupRun, listRepos, repoHttpStatus, RUN_PREFIX} from './fixtures.js'
-import {createConfigDir, removeConfigDir, runCli, runCliJson} from './helpers.js'
+import {cleanupRun, listRepos, repoHttpStatus, RUN_ID, RUN_PREFIX} from './fixtures.js'
+import {createConfigDir, removeConfigDir, runCliJson} from './helpers.js'
 
 describe('e2e: repo lifecycle', () => {
   let configDir: string
@@ -31,7 +31,7 @@ describe('e2e: repo lifecycle', () => {
         slug,
         '--private',
         '--description',
-        `[e2e ${RUN_PREFIX}] lifecycle`,
+        `[e2e ${RUN_ID}] lifecycle`,
       ],
       configDir,
     )
@@ -75,7 +75,24 @@ describe('e2e: repo lifecycle', () => {
     // slug as an update, not an error. The suite pins that contract — and
     // that upserting does not duplicate the repo.
     const conflicting = `${RUN_PREFIX}conflict`
-    await runCli(['bb', 'repo', 'create', process.env.E2E_WORKSPACE!, conflicting, '--private'], configDir)
+    // The first create is asserted too, so a pre-existing failure can't be
+    // mistaken for upsert tolerance. It also writes the fixture description
+    // marker, keeping the repo reclaimable by the stale sweep.
+    const initial = await runCliJson<{success: boolean}>(
+      [
+        'bb',
+        'repo',
+        'create',
+        process.env.E2E_WORKSPACE!,
+        conflicting,
+        '--private',
+        '--description',
+        `[e2e ${RUN_ID}] conflict`,
+      ],
+      configDir,
+    )
+    expect(initial.success).to.be.true
+
     const again = await runCliJson<{success: boolean}>(
       ['bb', 'repo', 'create', process.env.E2E_WORKSPACE!, conflicting, '--private'],
       configDir,

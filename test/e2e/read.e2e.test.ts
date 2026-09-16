@@ -1,6 +1,6 @@
 import {expect} from 'chai'
 
-import {cleanupRun, FEATURE_BRANCH, listRepos, RUN_ID, seedRepo} from './fixtures.js'
+import {cleanupRun, FEATURE_BRANCH, listRepos, RUN_ID, RUN_PREFIX, seedRepo} from './fixtures.js'
 import {createConfigDir, removeConfigDir, runCliJson, runCliOk} from './helpers.js'
 
 type Repo = {full_name: string; slug?: string}
@@ -130,7 +130,7 @@ describe('e2e: read paths', () => {
   })
 
   it('sees both fixture repos through the raw listRepos oracle', async () => {
-    const names = (await listRepos(RUN_ID)).map((repo) => repo.name)
+    const names = (await listRepos(RUN_PREFIX)).map((repo) => repo.name)
     expect(names).to.include(first.slug)
     expect(names).to.include(second.slug)
   })

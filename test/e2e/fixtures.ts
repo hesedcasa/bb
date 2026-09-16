@@ -75,7 +75,7 @@ function assertStatus(what: string, status: number, body: unknown, expected: num
 export async function seedRepo(purpose: string): Promise<{featureSha: string; mainSha: string; slug: string}> {
   const {workspace} = requireEnv()
   const slug = `${RUN_PREFIX}${purpose}`
-  const repo = `repositories/${workspace}/${slug}`
+  const repo = `/repositories/${workspace}/${slug}`
 
   const created = await call('PUT', repo, {
     body: {description: `[e2e ${RUN_ID}] ${purpose}`, is_private: true, scm: 'git'},
@@ -119,11 +119,13 @@ export async function seedRepo(purpose: string): Promise<{featureSha: string; ma
  * stopped early would delete one page of fixtures and report success.
  *
  * @param prefix The name prefix to match.
- * @returns Name and created_on for each matching repo.
+ * @returns Name, description, and created_on for each matching repo.
  */
-export async function listRepos(prefix: string): Promise<Array<{createdOn: string; name: string}>> {
+export async function listRepos(
+  prefix: string,
+): Promise<Array<{createdOn: string; description: string; name: string}>> {
   const {workspace} = requireEnv()
-  const repos: Array<{createdOn: string; name: string}> = []
+  const repos: Array<{createdOn: string; description: string; name: string}> = []
   let page = 1
 
   for (;;) {
@@ -131,10 +133,13 @@ export async function listRepos(prefix: string): Promise<Array<{createdOn: strin
     const {body, status} = await call('GET', `/repositories/${workspace}?page=${page}&pagelen=100&role=admin`)
     assertStatus(`listRepos page ${page}`, status, body, [200])
 
-    const pageData = body as {next?: string; values?: Array<{created_on?: string; name?: string}>}
+    const pageData = body as {
+      next?: string
+      values?: Array<{created_on?: string; description?: string; name?: string}>
+    }
     for (const repo of pageData.values ?? []) {
       if (repo.name?.startsWith(prefix)) {
-        repos.push({createdOn: repo.created_on ?? '', name: repo.name})
+        repos.push({createdOn: repo.created_on ?? '', description: repo.description ?? '', name: repo.name})
       }
     }
 
@@ -156,7 +161,7 @@ export async function listRepos(prefix: string): Promise<Array<{createdOn: strin
  */
 export async function seedBranch(slug: string, fromSha: string, name: string): Promise<void> {
   const {workspace} = requireEnv()
-  const branch = await call('POST', `repositories/${workspace}/${slug}/refs/branches`, {
+  const branch = await call('POST', `/repositories/${workspace}/${slug}/refs/branches`, {
     body: {name, target: {hash: fromSha}},
   })
   assertStatus(`seedBranch ${name}`, branch.status, branch.body, [200, 201])
@@ -171,7 +176,7 @@ export async function seedBranch(slug: string, fromSha: string, name: string): P
  */
 export async function refHttpStatus(slug: string, name: string): Promise<number> {
   const {workspace} = requireEnv()
-  const {status} = await call('GET', `repositories/${workspace}/${slug}/refs/branches/${name}`)
+  const {status} = await call('GET', `/repositories/${workspace}/${slug}/refs/branches/${name}`)
   return status
 }
 
@@ -224,11 +229,76 @@ async function deleteAll(slugs: string[]): Promise<void> {
 }
 
 /**
+ * Whether a repo looks like one this suite created.
+ *
+ * `sweepStale` is a prefix query with no other guard, so this predicate carries
+ * the real burden of never selecting a legitimate workspace repo that merely
+ * starts with `e2e-`. Three properties must hold together: the description
+ * starts with the `[e2e ` marker every fixture writes, the run id inside it
+ * has a shape this suite actually produces, and the name corroborates the same
+ * run id. The shape check runs on the description's run id rather than a token
+ * of the name because CI run ids themselves contain a hyphen.
+ *
+ * String methods only — no regex literals in test/** (see CLAUDE.md). An
+ * E2E_RUN_ID outside the three shapes fails safe: the sweep leaves those
+ * fixtures for a manual delete rather than guessing.
+ */
+function isOurs(name: string, description: string): boolean {
+  const marker = '[e2e '
+  if (!description.startsWith(marker)) return false
+  const closing = description.indexOf(']')
+  if (closing === -1) return false
+
+  const runId = description.slice(marker.length, closing)
+  return isRunShaped(runId) && name.startsWith(`${SHARED_PREFIX}${runId}-`)
+}
+
+/**
+ * Whether `runId` matches a run id this suite produces: `local-<pid>` from
+ * e2e.sh, `<workflow run id>-<attempt>` from CI, or the 8-hex-character local
+ * default.
+ */
+function isRunShaped(runId: string): boolean {
+  if (runId.startsWith('local-')) return isDigits(runId.slice('local-'.length))
+
+  const separator = runId.indexOf('-')
+  if (separator !== -1) {
+    return isDigits(runId.slice(0, separator)) && isDigits(runId.slice(separator + 1))
+  }
+
+  return runId.length === 8 && isHexadecimal(runId)
+}
+
+function isDigits(text: string): boolean {
+  if (text.length === 0) return false
+  for (const char of text) {
+    if (char < '0' || char > '9') return false
+  }
+
+  return true
+}
+
+function isHexadecimal(text: string): boolean {
+  if (text.length === 0) return false
+  for (const char of text) {
+    const digit = char >= '0' && char <= '9'
+    const lowerHex = char >= 'a' && char <= 'f'
+    if (!digit && !lowerHex) return false
+  }
+
+  return true
+}
+
+/**
  * Deletes every fixture created by this process.
  *
  * No `created`-set union is needed (unlike the jira suite): Bitbucket list
  * reads are immediately consistent, so the prefix lookup sees everything the
  * run created the moment it exists.
+ *
+ * Deliberately name-scoped rather than isOurs-gated: the prefix embeds this
+ * run's fresh random id, and staying name-only means the backstop reclaims
+ * fixtures even when a caller wrote a nonstandard description.
  */
 export async function cleanupRun(): Promise<void> {
   await deleteAll((await listRepos(RUN_PREFIX)).map((repo) => repo.name))
@@ -238,13 +308,17 @@ export async function cleanupRun(): Promise<void> {
  * Deletes fixtures older than an hour, left behind by a crashed run.
  *
  * The age filter is what makes this safe to run while another suite is in
- * flight: it can only ever reclaim fixtures no live run still owns.
+ * flight: it can only ever reclaim fixtures no live run still owns. The
+ * isOurs predicate is the second guard — age alone would select any
+ * `e2e-`-prefixed repo a user happened to create.
  *
  * @returns How many repos were deleted.
  */
 export async function sweepStale(): Promise<number> {
   const cutoff = Date.now() - 60 * 60 * 1000
-  const stale = (await listRepos(SHARED_PREFIX)).filter((repo) => Date.parse(repo.createdOn) < cutoff)
+  const stale = (await listRepos(SHARED_PREFIX)).filter(
+    (repo) => isOurs(repo.name, repo.description) && Date.parse(repo.createdOn) < cutoff,
+  )
   await deleteAll(stale.map((repo) => repo.name))
   return stale.length
 }
