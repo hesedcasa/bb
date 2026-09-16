@@ -16,6 +16,9 @@ npm test                       # mocha; posttest runs lint
 npx mocha test/commands/bb/repo/get.test.ts   # single test file
 npm run test:coverage          # c8; fails under 50% lines/functions/branches/statements
 npm run test:coverage:report   # HTML report
+npm run test:e2e               # e2e suite: build, run against the live workspace, sweep
+npm run e2e:mocha              # e2e without rebuilding
+npm run e2e:sweep              # reclaim e2e fixtures (this run's, plus those older than an hour)
 npm run lint                   # eslint
 npm run format                 # eslint --fix + prettier --write
 npm run find-deadcode          # ts-prune --ignore '(run|default)'
@@ -172,6 +175,47 @@ const result = await cmd.run()
 `createProfileManagerStub` returns `{loadAuthConfig: stub().resolves(mockAuth)}`; resolve `null` to cover the missing-config path (which throws via `this.error`, so wrap in try/catch).
 
 **API layer tests** stub `globalThis.fetch` directly (`fetchStub = stub(globalThis, 'fetch')`, `.resolves(new Response(...))`, restore in `afterEach`).
+
+### End-to-end tests
+
+`test/e2e/**` runs the built `bin/run.js` as a real subprocess against the live
+Bitbucket Cloud fixture workspace (`E2E_WORKSPACE`). It is excluded from `npm test`
+and needs credentials exported first, because nothing in this repo loads `.env`:
+
+```bash
+set -a; . ./.env; set +a
+npm run test:e2e              # build, run, then sweep
+npm run test:e2e -- --keep    # leave fixtures behind for inspection
+npm run e2e:mocha             # run without rebuilding
+npm run e2e:sweep             # delete this run's fixtures, plus anything older than an hour
+```
+
+`test/e2e/connection.e2e.test.ts` only reads, but every other file creates
+repos, so the API token needs write scopes: `write:repository` (+delete) and
+`write:pullrequest` on top of read access.
+
+Five rules specific to this suite:
+
+- **Never pass `--json`.** JSON is already the default (`BaseCommand.jsonEnabled()`);
+  the auth commands declare their own `--json` via `enableJsonFlag`, but the
+  hand-written commands do not.
+- **The exit-code contract is not jira's.** A failed `ApiResult` still exits 0 —
+  the failure lives in the payload (`success: false`, `error`). Only thrown
+  errors exit non-zero: missing config → 1, `auth test` failure → 2.
+- **Fixtures are created with raw `fetch` in `test/e2e/fixtures.ts`, never
+  through the CLI** — they are the oracle the CLI is checked against. Every
+  fixture repo is named `e2e-<run id>-…`; that prefix is the structural bound
+  on both destructive sweeps (`cleanupRun`, `sweepStale`).
+- **Bitbucket reads are immediately consistent** — no index lag, so unlike the
+  jira suite there is no polling; a list query sees a repo the moment it exists.
+- **No regex literals in `test/**`.** `require-unicode-regexp` demands the `v`
+  flag, which needs TS target `es2024` while this repo targets `es2022`. Use
+  string methods instead.
+
+Known quirks pinned as observed: `bb repo list` renders a literal `apiToken`
+in plaintext via `auth list` (configs using `env:` references only leak the
+reference), and a bad token surfaces as `error: ''` because Bitbucket's 401
+body is empty.
 
 ## Conventions & Gotchas
 
