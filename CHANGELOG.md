@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.2](https://github.com/hesedcasa/bb/compare/v0.10.1...v0.10.2) (2026-09-16)
+
+
+### 🛠️ Fixes
+
+* pin e2e suite to observed Bitbucket semantics ([#131](https://github.com/hesedcasa/bb/issues/131)) ([8287e93](https://github.com/hesedcasa/bb/commit/8287e9351c9504fce76532320e0f624f070ccfa9))
+
 ## [0.10.1](https://github.com/hesedcasa/bb/compare/v0.10.0...v0.10.1) (2026-08-12)
 
 
