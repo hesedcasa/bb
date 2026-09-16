@@ -26,6 +26,7 @@ const DECLINE_BRANCH = 'e2e-feature-b'
 describe('e2e: pr lifecycle', () => {
   let configDir: string
   let slug: string
+  let defaultBranch: string
   let featureSha: string
   let mergeId: number
   let declineId: number
@@ -35,6 +36,9 @@ describe('e2e: pr lifecycle', () => {
     configDir = await createConfigDir()
     const seeded = await seedRepo('pr')
     slug = seeded.slug
+    // The sandbox defaults new repos to `master`, not `main`, so the PR
+    // destination is whatever the API reports rather than a hardcoded name.
+    defaultBranch = seeded.defaultBranch
     featureSha = seeded.featureSha
     // The decline leg gets its own source branch so the merge leg's
     // --close-source-branch never pulls a ref out from under it.
@@ -65,7 +69,7 @@ describe('e2e: pr lifecycle', () => {
         '--source',
         FEATURE_BRANCH,
         '--destination',
-        'main',
+        defaultBranch,
       ],
       configDir,
     )
@@ -85,7 +89,7 @@ describe('e2e: pr lifecycle', () => {
         '--source',
         DECLINE_BRANCH,
         '--destination',
-        'main',
+        defaultBranch,
       ],
       configDir,
     )
@@ -102,7 +106,7 @@ describe('e2e: pr lifecycle', () => {
     expect(payload.success).to.be.true
     expect(payload.data.state).to.equal('OPEN')
     expect(payload.data.source.branch.name).to.equal(FEATURE_BRANCH)
-    expect(payload.data.destination.branch.name).to.equal('main')
+    expect(payload.data.destination.branch.name).to.equal(defaultBranch)
     expect(payload.data.title).to.contain(RUN_ID)
   })
 
@@ -174,25 +178,29 @@ describe('e2e: pr lifecycle', () => {
     expect(listed.data.values.map((comment) => comment.content.raw)).to.include(updated)
   })
 
-  it('deletes the comment, after which the list no longer carries it', async () => {
+  // Bitbucket never drops a deleted comment from the thread listing: it
+  // blanks the content and flips deleted:true, leaving a placeholder so
+  // replies stay anchored. Pinned as observed against the live API.
+  it('deletes the comment, which survives as a deleted placeholder', async () => {
     const result = await runCliJson<{success: boolean}>(
       ['bb', 'pr', 'comment-delete', process.env.E2E_WORKSPACE!, slug, String(mergeId), String(commentId)],
       configDir,
     )
     expect(result.success).to.be.true
 
-    const listed = await runCliJson<{data: {values: Array<{id: number}>}}>(
-      ['bb', 'pr', 'comments', process.env.E2E_WORKSPACE!, slug, String(mergeId)],
-      configDir,
-    )
-    expect(listed.data.values.map((comment) => comment.id)).to.not.include(commentId)
+    const listed = await runCliJson<{
+      data: {values: Array<{content: {raw: string}; deleted?: boolean; id: number}>}
+    }>(['bb', 'pr', 'comments', process.env.E2E_WORKSPACE!, slug, String(mergeId)], configDir)
+    const deleted = listed.data.values.find((comment) => comment.id === commentId)
+    expect(deleted?.deleted, 'deleted comment must be flagged in the thread').to.be.true
+    expect(deleted?.content.raw, 'deleted comment content must be blanked').to.equal('')
   })
 
-  // To be confirmed on the first live run: Bitbucket resolves *tasks*, and a
-  // plain comment is not a task — the expectation below is that the resolve
-  // is refused (success:false under the pinned exit-0 contract). If the
-  // sandbox resolves plain comments too, flip this assertion deliberately.
-  it('refuses to resolve a plain (non-task) comment', async () => {
+  // Pinned as observed on the first live run: Bitbucket resolves plain
+  // (non-task) comments too — POST …/resolve answers 200 with a
+  // comment_resolution payload, no task requirement. The pre-live guess that
+  // this would be refused was wrong.
+  it('resolves a plain (non-task) comment', async () => {
     const target = await runCliJson<{data: Comment; success: boolean}>(
       [
         'bb',
@@ -212,7 +220,7 @@ describe('e2e: pr lifecycle', () => {
       ['bb', 'pr', 'comment-resolve', process.env.E2E_WORKSPACE!, slug, String(mergeId), String(target.data.id)],
       configDir,
     )
-    expect(resolved.success).to.be.false
+    expect(resolved.success).to.be.true
   })
 
   it('records activity on the pull request', async () => {

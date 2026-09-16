@@ -11,8 +11,8 @@ type Paged<T> = {page: number; pagelen: number; size: number; values: T[]}
 // mocha runs the files sequentially.
 describe('e2e: read paths', () => {
   let configDir: string
-  let first: {featureSha: string; mainSha: string; slug: string}
-  let second: {featureSha: string; mainSha: string; slug: string}
+  let first: {defaultBranch: string; featureSha: string; mainSha: string; slug: string}
+  let second: {defaultBranch: string; featureSha: string; mainSha: string; slug: string}
 
   before(async () => {
     configDir = await createConfigDir()
@@ -87,12 +87,13 @@ describe('e2e: read paths', () => {
   })
 
   it('lists the main-branch commit and fetches it by hash', async () => {
+    // Unqualified commit lists span every branch, so --include scopes this to
+    // the default branch: exactly the README commit, with the feature commit
+    // (reachable only from the feature branch) excluded.
     const listed = await runCliJson<{data: Paged<{hash: string}>}>(
-      ['bb', 'commit', 'list', process.env.E2E_WORKSPACE!, first.slug],
+      ['bb', 'commit', 'list', process.env.E2E_WORKSPACE!, first.slug, '--include', first.defaultBranch],
       configDir,
     )
-    // The default branch carries exactly the README commit; the feature
-    // commit lives on the feature branch and must not leak in here.
     expect(listed.data.values.map((commit) => commit.hash)).to.deep.equal([first.mainSha])
 
     const fetched = await runCliJson<{data: {hash: string}; success: boolean}>(
