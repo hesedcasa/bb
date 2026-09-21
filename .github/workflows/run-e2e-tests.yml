@@ -2,12 +2,10 @@ name: Run end-to-end tests
 
 permissions: read-all
 
-# Nightly and on demand only. These tests share one live Bitbucket workspace,
-# so running them per pull request would let concurrent runs collide, and fork
-# PRs cannot read the secrets they need.
+# On demand only. These tests share one live Bitbucket workspace, so running
+# them per pull request would let concurrent runs collide, and fork PRs cannot
+# read the secrets they need.
 on:
-  schedule:
-    - cron: '23 3 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -19,9 +17,9 @@ jobs:
     name: End-to-end tests against the Bitbucket sandbox
     # workflow_dispatch can otherwise be pointed at any ref by anyone with
     # write access, handing the sandbox secrets to whatever code sits on that
-    # ref. The schedule always runs; dispatch runs only against main. A
-    # required-reviewer GitHub Environment would be the stronger gate.
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    # ref. Dispatch runs only against main. A required-reviewer GitHub
+    # Environment would be the stronger gate.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # Two legs (standalone CLI, then the same suite via sdkck) at up to 2
     # minutes per test.
