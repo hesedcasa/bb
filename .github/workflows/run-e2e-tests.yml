@@ -152,13 +152,18 @@ jobs:
           project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
           env-slug: dev
 
+      # Step-level timeouts, not just the job's: a hung standalone run fails
+      # only its own step, so the sdkck leg (which runs unless cancelled) still
+      # gets its turn. The job-level timeout stays as the outer backstop.
       - name: Run end-to-end tests
+        timeout-minutes: 20
         run: npm run e2e:mocha
         env:
           E2E_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Run end-to-end tests via sdkck
         if: ${{ !cancelled() && needs.build.outputs.sdkck-setup == 'success' }}
+        timeout-minutes: 20
         run: npm run e2e:mocha
         env:
           E2E_HOST_CLI: sdkck
