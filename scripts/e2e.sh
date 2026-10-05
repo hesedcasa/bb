@@ -26,9 +26,9 @@ if { [ -z "${BITBUCKET_EMAIL:-}" ] || [ -z "${BITBUCKET_API_TOKEN:-}" ] ||
   command -v infisical >/dev/null; then
   infisical_args=(--silent)
   if [ -n "${INFISICAL_UNIVERSAL_AUTH_CLIENT_ID:-}" ]; then
-    INFISICAL_TOKEN="$(infisical login --method=universal-auth --silent --plain \
-      --client-id="$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID" \
-      --client-secret="${INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET:-}")"
+    # The CLI reads the client id and secret from the environment; passing
+    # them as flags would put the secret in the process list.
+    INFISICAL_TOKEN="$(infisical login --method=universal-auth --silent --plain)"
     export INFISICAL_TOKEN
   fi
   # A machine identity token ignores .infisical.json, so pass its project ID.
