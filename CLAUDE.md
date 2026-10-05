@@ -147,11 +147,10 @@ Profile-based format, with the legacy single-`auth` shape still supported:
 }
 ```
 
-**Nothing in this repo loads `.env`** — there is no dotenv dependency, so the variables must already be in the process environment. Export them before running any command that talks to Confluence:
+**Credentials live in Infisical, not in `.env`** (never commit a token) — there is no dotenv dependency, so the variables must already be in the process environment. `.infisical.json` links the repo to the Infisical project; after a one-time `infisical login`, wrap any command that talks to Bitbucket in `infisical run --`:
 
 ```bash
-set -a; . ./.env; set +a
-./bin/dev.js bb auth test
+infisical run -- ./bin/dev.js bb auth test
 ```
 
 ## Testing
@@ -178,14 +177,13 @@ const result = await cmd.run()
 
 ### End-to-end tests
 
-`test/e2e/**` runs the built `bin/run.js` as a real subprocess against the live Bitbucket Cloud fixture workspace (`E2E_WORKSPACE`). `npm run test:e2e` then reruns the same suite through the latest sdkck host CLI with the current build packed and installed as its `@hesed/bb` plugin — the host switch (`E2E_HOST_CLI=sdkck` + `E2E_SDKCK_HOME`, set by `scripts/e2e.sh` and the CI workflow) lives in `test/e2e/helpers.ts`; the plugin must be installed before any `sdkck bb` call, or sdkck auto-installs the published release, and the tarball must be a `file:` URL (bare paths read as GitHub org/repo). It is excluded from `npm test` and needs credentials exported first, because nothing in this repo loads `.env`:
+`test/e2e/**` runs the built `bin/run.js` as a real subprocess against the live Bitbucket Cloud fixture workspace (`E2E_WORKSPACE`). `npm run test:e2e` then reruns the same suite through the latest sdkck host CLI with the current build packed and installed as its `@hesed/bb` plugin — the host switch (`E2E_HOST_CLI=sdkck` + `E2E_SDKCK_HOME`, set by `scripts/e2e.sh` and the CI workflow) lives in `test/e2e/helpers.ts`; the plugin must be installed before any `sdkck bb` call, or sdkck auto-installs the published release, and the tarball must be a `file:` URL (bare paths read as GitHub org/repo). It is excluded from `npm test`; `scripts/e2e.sh` re-runs itself under `infisical run` when the credentials aren't exported — signed in by `infisical login`, or headless (an E2B sandbox) by a machine identity's `INFISICAL_UNIVERSAL_AUTH_CLIENT_ID`/`_CLIENT_SECRET`, with `--projectId` read from `.infisical.json` — but the other scripts need the wrapper:
 
 ```bash
-set -a; . ./.env; set +a
-npm run test:e2e              # build, run, then sweep
-npm run test:e2e -- --keep    # leave fixtures behind for inspection
-npm run e2e:mocha             # run without rebuilding
-npm run e2e:sweep             # delete this run's fixtures, plus anything older than an hour
+npm run test:e2e                               # build, run, then sweep
+npm run test:e2e -- --keep                     # leave fixtures behind for inspection
+infisical run -- npm run e2e:mocha             # run without rebuilding
+infisical run -- npm run e2e:sweep             # delete this run's fixtures, plus anything older than an hour
 ```
 
 `test/e2e/connection.e2e.test.ts` only reads, but every other file creates

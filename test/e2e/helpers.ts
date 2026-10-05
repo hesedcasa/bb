@@ -20,7 +20,7 @@ export type CliResult = {
 /**
  * Reads the sandbox credentials from the environment.
  *
- * Nothing in this repo loads .env, so these must already be exported.
+ * They come from Infisical, so run under `infisical run --`.
  *
  * @returns The email, API token and fixture workspace slug.
  */
@@ -32,7 +32,7 @@ export function requireEnv(): {apiToken: string; email: string; workspace: strin
   if (!apiToken || !email || !workspace) {
     throw new Error(
       'Missing BITBUCKET_EMAIL, BITBUCKET_API_TOKEN or E2E_WORKSPACE. ' +
-        'Nothing in this repo loads .env — run: set -a; . ./.env; set +a',
+        'Run under Infisical: infisical run -- npm run test:e2e',
     )
   }
 
@@ -99,9 +99,7 @@ function hostInvocation(
   if (process.env.E2E_HOST_CLI === 'sdkck') {
     const home = process.env.E2E_SDKCK_HOME
     if (!home) {
-      throw new Error(
-        'E2E_HOST_CLI=sdkck requires E2E_SDKCK_HOME — set by scripts/e2e.sh or the CI workflow',
-      )
+      throw new Error('E2E_HOST_CLI=sdkck requires E2E_SDKCK_HOME — set by scripts/e2e.sh or the CI workflow')
     }
 
     return {
