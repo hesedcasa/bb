@@ -4,7 +4,9 @@
 # host CLI with this build packed and installed as its @hesed/bb plugin.
 #
 # The credentials come from Infisical: when they aren't already exported, the
-# script re-runs itself under `infisical run` (needs a one-time login).
+# script re-runs itself under `infisical run`, signed in either by a one-time
+# `infisical login` or, in a headless sandbox, by a machine identity's
+# INFISICAL_UNIVERSAL_AUTH_CLIENT_ID and INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET.
 #
 #   npm run test:e2e
 #   npm run test:e2e -- --keep            # skip the post-run sweep
@@ -22,8 +24,23 @@ cd "$(dirname "$0")/.."
 if { [ -z "${BITBUCKET_EMAIL:-}" ] || [ -z "${BITBUCKET_API_TOKEN:-}" ] ||
   [ -z "${E2E_WORKSPACE:-}" ]; } && [ -z "${E2E_VIA_INFISICAL:-}" ] &&
   command -v infisical >/dev/null; then
-  E2E_VIA_INFISICAL=1 exec infisical run --silent -- "$PWD/scripts/e2e.sh" "$@"
+  infisical_args=(--silent)
+  if [ -n "${INFISICAL_UNIVERSAL_AUTH_CLIENT_ID:-}" ]; then
+    INFISICAL_TOKEN="$(infisical login --method=universal-auth --silent --plain \
+      --client-id="$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID" \
+      --client-secret="${INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET:-}")"
+    export INFISICAL_TOKEN
+  fi
+  # A machine identity token ignores .infisical.json, so pass its project ID.
+  if [ -n "${INFISICAL_TOKEN:-}" ]; then
+    infisical_args+=(--projectId "$(node -p "require('./.infisical.json').workspaceId")")
+  fi
+  E2E_VIA_INFISICAL=1 exec infisical run "${infisical_args[@]}" -- "$PWD/scripts/e2e.sh" "$@"
 fi
+
+# The Bitbucket credentials are all the tests need; keep the Infisical ones
+# out of their environment.
+unset INFISICAL_TOKEN INFISICAL_UNIVERSAL_AUTH_CLIENT_ID INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET
 
 KEEP=0
 MOCHA_ARGS=()
@@ -45,7 +62,8 @@ done
 if [ "${#missing[@]}" -gt 0 ]; then
   echo "error: missing credentials: ${missing[*]}" >&2
   echo "Check they exist in Infisical's dev environment and that the" >&2
-  echo "Infisical CLI is installed and logged in (infisical login)." >&2
+  echo "Infisical CLI is installed and logged in (infisical login), or set" >&2
+  echo "INFISICAL_UNIVERSAL_AUTH_CLIENT_ID and _CLIENT_SECRET." >&2
   exit 1
 fi
 
