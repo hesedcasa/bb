@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.3](https://github.com/hesedcasa/bb/compare/v0.10.2...v0.10.3) (2026-10-05)
+
+
+### 🛠️ Fixes
+
+* **ci:** harden the e2e workflow and keep secrets out of installs ([#150](https://github.com/hesedcasa/bb/issues/150)) ([6ef6f4f](https://github.com/hesedcasa/bb/commit/6ef6f4f4ff4eb7a48ced0b3b323a0184fa036897))
+* **ci:** keep install-time edits and the client secret away from credentials ([#149](https://github.com/hesedcasa/bb/issues/149)) ([17ec7a2](https://github.com/hesedcasa/bb/commit/17ec7a22fd65075837058cf853e2e216f1a2a62a))
+
 ## [0.10.2](https://github.com/hesedcasa/bb/compare/v0.10.1...v0.10.2) (2026-09-16)
 
 
