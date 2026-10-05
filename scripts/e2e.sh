@@ -104,7 +104,9 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==> Building the CLI"
-npm run build
+# The build and the pack below run repository and dependency scripts that never
+# need the credentials, so they are stripped there as for the sdkck installs.
+env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE npm run build
 
 run_mocha() {
   # Delegates to the `e2e:mocha` script rather than calling mocha directly, so
@@ -139,7 +141,8 @@ echo "==> Packing the current build and installing it as an sdkck plugin"
 # the real install artifact, not just the working tree. Packing straight into
 # the throwaway home keeps the tarball out of the repo root; the EXIT trap
 # removes it with the rest of the home.
-TGZ="$(npm pack --pack-destination "$SDKCK_HOME" | tail -n 1)"
+TGZ="$(env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE \
+  npm pack --pack-destination "$SDKCK_HOME" | tail -n 1)"
 
 # Installing here — before any `sdkck bb` invocation — stops sdkck's
 # first-use auto-installer from pulling the published @hesed/bb release over
