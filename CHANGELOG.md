@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.4](https://github.com/hesedcasa/bb/compare/v0.10.3...v0.10.4) (2026-10-05)
+
+
+### 🛠️ Fixes
+
+* **ci:** add step timeouts to the e2e mocha legs ([#152](https://github.com/hesedcasa/bb/issues/152)) ([c9091fb](https://github.com/hesedcasa/bb/commit/c9091fbee72201b3ee08f595a811c2577af0318f))
+
 ## [0.10.3](https://github.com/hesedcasa/bb/compare/v0.10.2...v0.10.3) (2026-10-05)
 
 
