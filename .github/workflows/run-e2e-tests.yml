@@ -61,10 +61,13 @@ jobs:
       # published release over this build. The throwaway sdkck home keeps the
       # install, config and caches out of the runner's real sdkck setup; the
       # test side finds it via E2E_SDKCK_HOME. `continue-on-error`, so a
-      # broken sdkck release still lets the standalone leg run.
+      # broken sdkck release still lets the standalone leg run; the step's own
+      # timeout keeps a stalled install from hitting the job timeout, which
+      # `continue-on-error` cannot absorb and which would skip the upload.
       - name: Install the latest sdkck and the packed plugin
         id: sdkck
         continue-on-error: true
+        timeout-minutes: 5
         run: |
           npm install --no-save sdkck
           home="$RUNNER_TEMP/sdkck-home"
