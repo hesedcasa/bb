@@ -104,7 +104,9 @@ cleanup() {
 trap cleanup EXIT
 
 echo "==> Building the CLI"
-npm run build
+# The build and the pack below run repository and dependency scripts that never
+# need the credentials, so they are stripped there as for the sdkck installs.
+env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE npm run build
 
 run_mocha() {
   # Delegates to the `e2e:mocha` script rather than calling mocha directly, so
@@ -120,8 +122,11 @@ run_mocha
 # installed as its @hesed/bb plugin.
 echo "==> Downloading the latest sdkck"
 # --no-save resolves "latest" from the registry on every run without touching
-# package.json; the binary comes from node_modules/.bin.
-npm install --silent --no-save sdkck
+# package.json; the binary comes from node_modules/.bin. The install runs with
+# the credentials stripped from the environment: a lifecycle script of the
+# freshly fetched package is arbitrary code from a mutable release, and never
+# needs them.
+env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE npm install --silent --no-save sdkck
 export PATH="$PWD/node_modules/.bin:$PATH"
 
 # A throwaway sdkck home keeps the plugin install, its config and its caches
@@ -136,15 +141,19 @@ echo "==> Packing the current build and installing it as an sdkck plugin"
 # the real install artifact, not just the working tree. Packing straight into
 # the throwaway home keeps the tarball out of the repo root; the EXIT trap
 # removes it with the rest of the home.
-TGZ="$(npm pack --pack-destination "$SDKCK_HOME" | tail -n 1)"
+TGZ="$(env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE \
+  npm pack --pack-destination "$SDKCK_HOME" | tail -n 1)"
 
 # Installing here — before any `sdkck bb` invocation — stops sdkck's
 # first-use auto-installer from pulling the published @hesed/bb release over
 # the build under test. The tarball must be passed as a `file:` URL: sdkck
 # resolves any bare path containing a slash as a GitHub org/repo.
-SDKCK_CACHE_DIR="$SDKCK_HOME/cache" \
-SDKCK_CONFIG_DIR="$SDKCK_HOME/config" \
-SDKCK_DATA_DIR="$SDKCK_HOME/data" \
+# Credentials are stripped here too: the install handles a local tarball and
+# needs none, so the mocha legs are the only steps that hold them under sdkck.
+env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE \
+  SDKCK_CACHE_DIR="$SDKCK_HOME/cache" \
+  SDKCK_CONFIG_DIR="$SDKCK_HOME/config" \
+  SDKCK_DATA_DIR="$SDKCK_HOME/data" \
   sdkck plugins install "file:$SDKCK_HOME/$TGZ"
 
 echo "==> Running end-to-end tests via sdkck"
