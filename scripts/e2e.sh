@@ -77,11 +77,27 @@ export E2E_RUN_ID
 # fixtures in the shared workspace, so it must not be swallowed: it surfaces
 # as a non-zero exit unless the tests already failed, in which case that
 # status is the more useful one to keep.
+# The throwaway sdkck home this script creates, if it got that far. Deliberately
+# NOT named SDKCK_HOME: an inherited SDKCK_HOME could point at the developer's
+# real sdkck setup, and the EXIT trap must never rm -rf that. This variable only
+# ever holds a path this script itself mktemp'd.
+SDKCK_E2E_HOME=""
+
 cleanup() {
   local status=$?
+  # A setup step that aborts under `set -e` after a failed leg would otherwise
+  # replace that leg's status; the first failure is the one to report.
+  if [ "${EXIT_STATUS:-0}" -ne 0 ]; then
+    status=$EXIT_STATUS
+  fi
 
-  if [ -n "${SDKCK_HOME:-}" ]; then
-    rm -rf "$SDKCK_HOME"
+  if [ -n "$SDKCK_E2E_HOME" ]; then
+    # `npm pack` can fail after `prepack` has already rewritten README.md, so
+    # the restore lives here rather than only after the pack.
+    if [ -f "$SDKCK_E2E_HOME/README.md.orig" ]; then
+      cp "$SDKCK_E2E_HOME/README.md.orig" README.md
+    fi
+    rm -rf "$SDKCK_E2E_HOME"
   fi
 
   if [ "$KEEP" -ne 0 ]; then
@@ -103,11 +119,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> Building the CLI"
-# The build and the pack below run repository and dependency scripts that never
-# need the credentials, so they are stripped there as for the sdkck installs.
-env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE npm run build
-
 run_mocha() {
   # Delegates to the `e2e:mocha` script rather than calling mocha directly, so
   # both entry points share one glob and one timeout.
@@ -115,8 +126,26 @@ run_mocha() {
   npm run --silent e2e:mocha -- ${MOCHA_ARGS[@]+"${MOCHA_ARGS[@]}"}
 }
 
+# Records the first failing leg's status. A later leg failing with a different
+# status must not overwrite an earlier failure: the script's contract is to
+# exit with the first failure it saw.
+EXIT_STATUS=0
+record_failure() {
+  local leg_status=$?
+  [ "$EXIT_STATUS" -ne 0 ] || EXIT_STATUS=$leg_status
+}
+
+echo "==> Building the CLI"
+# The build and the pack below run repository and dependency scripts that never
+# need the credentials, so they are stripped there as for the sdkck installs.
+env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE npm run build
+
 echo "==> Running end-to-end tests against workspace ${E2E_WORKSPACE}"
-run_mocha
+# Both legs always run: a standalone-leg failure says nothing about the packed
+# plugin, and vice versa. The `|| record_failure` form keeps `set -e` from
+# aborting so the sdkck leg still executes; the first failure becomes the exit
+# code.
+run_mocha || record_failure
 
 # Second leg: the same suite through the sdkck host CLI, with this build
 # installed as its @hesed/bb plugin.
@@ -132,8 +161,22 @@ export PATH="$PWD/node_modules/.bin:$PATH"
 # A throwaway sdkck home keeps the plugin install, its config and its caches
 # out of the developer's real sdkck setup; the test side finds it via
 # E2E_SDKCK_HOME.
-SDKCK_HOME="$(mktemp -d)"
-export E2E_SDKCK_HOME="$SDKCK_HOME"
+SDKCK_E2E_HOME="$(mktemp -d)"
+export E2E_SDKCK_HOME="$SDKCK_E2E_HOME"
+SDKCK_DIRS=(
+  SDKCK_CACHE_DIR="$SDKCK_E2E_HOME/cache"
+  SDKCK_CONFIG_DIR="$SDKCK_E2E_HOME/config"
+  SDKCK_DATA_DIR="$SDKCK_E2E_HOME/data"
+)
+
+# A fresh home cannot hold the plugin yet; if it does, the leg would test
+# whatever is there rather than this build. `plugins inspect` is a host
+# command, so the probe cannot itself trigger sdkck's first-use install.
+if env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE \
+  "${SDKCK_DIRS[@]}" sdkck plugins inspect @hesed/bb --json >/dev/null 2>&1; then
+  echo "error: @hesed/bb is already installed in the throwaway sdkck home" >&2
+  exit 1
+fi
 
 echo "==> Packing the current build and installing it as an sdkck plugin"
 # npm pack runs `prepack`, regenerating oclif.manifest.json and the README —
@@ -141,20 +184,38 @@ echo "==> Packing the current build and installing it as an sdkck plugin"
 # the real install artifact, not just the working tree. Packing straight into
 # the throwaway home keeps the tarball out of the repo root; the EXIT trap
 # removes it with the rest of the home.
+# `oclif readme` stamps the local platform into README.md's usage block, so
+# the committed README is backed up here and put back by the EXIT trap rather
+# than left modified. `prepack` runs repository scripts and needs no
+# credentials, so they are stripped here too.
+cp README.md "$SDKCK_E2E_HOME/README.md.orig"
 TGZ="$(env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE \
-  npm pack --pack-destination "$SDKCK_HOME" | tail -n 1)"
+  npm pack --pack-destination "$SDKCK_E2E_HOME" | tail -n 1)"
+# A move, not a copy: once README.md is back, the EXIT trap must have nothing
+# left to restore, or it would overwrite edits made while the sdkck leg runs.
+mv "$SDKCK_E2E_HOME/README.md.orig" README.md
 
 # Installing here — before any `sdkck bb` invocation — stops sdkck's
-# first-use auto-installer from pulling the published @hesed/bb release over
-# the build under test. The tarball must be passed as a `file:` URL: sdkck
-# resolves any bare path containing a slash as a GitHub org/repo.
+# first-use auto-installer from pulling the published @hesed/bb release
+# over the build under test. The tarball must be passed as a `file:` URL:
+# sdkck resolves any bare path containing a slash as a GitHub org/repo.
 # Credentials are stripped here too: the install handles a local tarball and
 # needs none, so the mocha legs are the only steps that hold them under sdkck.
 env -u BITBUCKET_EMAIL -u BITBUCKET_API_TOKEN -u E2E_WORKSPACE \
-  SDKCK_CACHE_DIR="$SDKCK_HOME/cache" \
-  SDKCK_CONFIG_DIR="$SDKCK_HOME/config" \
-  SDKCK_DATA_DIR="$SDKCK_HOME/data" \
-  sdkck plugins install "file:$SDKCK_HOME/$TGZ"
+  "${SDKCK_DIRS[@]}" sdkck plugins install "file:$SDKCK_E2E_HOME/$TGZ"
+
+# Prove dispatch resolves to the tarball this run packed, not a published
+# release the auto-installer could have fetched: the install record sdkck
+# writes under the data dir must carry our file: URL. The record is read from
+# disk rather than via `sdkck plugins inspect`, which has been observed to die
+# on an unsettled top-level await right after loading a freshly installed
+# plugin.
+grep -Fq "\"file:$SDKCK_E2E_HOME/$TGZ\"" "$SDKCK_E2E_HOME/data/package.json" || {
+  echo "error: sdkck did not register the packed tarball as @hesed/bb" >&2
+  exit 1
+}
 
 echo "==> Running end-to-end tests via sdkck"
-E2E_HOST_CLI=sdkck run_mocha
+E2E_HOST_CLI=sdkck run_mocha || record_failure
+
+exit "$EXIT_STATUS"
