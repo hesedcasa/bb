@@ -70,14 +70,28 @@ jobs:
           npm install --no-save sdkck
           home="$RUNNER_TEMP/sdkck-home"
           mkdir -p "$home"
+          export SDKCK_CACHE_DIR="$home/cache" SDKCK_CONFIG_DIR="$home/config" SDKCK_DATA_DIR="$home/data"
+          # A fresh home cannot hold the plugin yet; if it does, the leg would
+          # test whatever is there rather than this build. `plugins inspect` is
+          # a host command, so the probe cannot itself trigger sdkck's
+          # first-use install.
+          if ./node_modules/.bin/sdkck plugins inspect @hesed/bb --json >/dev/null 2>&1; then
+            echo "error: @hesed/bb is already installed in the throwaway sdkck home" >&2
+            exit 1
+          fi
           # A `file:` URL is required: sdkck resolves any bare path containing
           # a slash as a GitHub org/repo. Packing into the throwaway home
           # keeps the tarball out of the workspace.
           tgz="$(npm pack --pack-destination "$home" | tail -n 1)"
-          SDKCK_CACHE_DIR="$home/cache" \
-          SDKCK_CONFIG_DIR="$home/config" \
-          SDKCK_DATA_DIR="$home/data" \
-            ./node_modules/.bin/sdkck plugins install "file:$home/$tgz"
+          ./node_modules/.bin/sdkck plugins install "file:$home/$tgz"
+          # Prove dispatch resolves to the tarball this run packed, not a
+          # published release the auto-installer could have fetched: the
+          # install record sdkck writes under the data dir must carry our
+          # file: URL. The record is read from disk rather than via
+          # `sdkck plugins inspect`, which has been observed to die on an
+          # unsettled top-level await right after loading a freshly
+          # installed plugin.
+          grep -Fq "\"file:$home/$tgz\"" "$SDKCK_DATA_DIR/package.json"
 
       # Only the build outputs travel: the jobs that hold the credentials check
       # out the repository themselves, so a lifecycle script that edits or
@@ -105,9 +119,10 @@ jobs:
     name: End-to-end tests against the Bitbucket sandbox
     needs: build
     runs-on: ubuntu-latest
-    # Two legs (standalone CLI, then the same suite via sdkck) at up to 2
-    # minutes per test.
-    timeout-minutes: 45
+    # Two legs (standalone CLI, then the same suite via sdkck) of up to 20
+    # minutes each, plus up to 10 minutes of setup (checkout, unpack, the
+    # credential fetch), so a slow setup cannot cut the sdkck leg short.
+    timeout-minutes: 50
     # id-token lets the Infisical action exchange GitHub's OIDC token for the
     # sandbox credentials, so no Infisical secret is stored in the repo. Only
     # this job and the sweep have it, and nothing in either installs packages.
