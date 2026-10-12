@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/hesedcasa/bb/compare/v0.10.4...v0.11.0) (2026-10-12)
+
+
+### 🎉 Features
+
+* Add `--draft` flag to `bb bb pr create` so created Bitbucket… ([#160](https://github.com/hesedcasa/bb/issues/160)) ([3cfb8e6](https://github.com/hesedcasa/bb/commit/3cfb8e67aef136f0127417b9195f2e50b5bb57c2))
+
 ## [0.10.4](https://github.com/hesedcasa/bb/compare/v0.10.3...v0.10.4) (2026-10-05)
 
 
