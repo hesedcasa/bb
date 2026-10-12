@@ -650,7 +650,7 @@ Create a new pull request
 ```
 USAGE
   $ bb bb pr create WORKSPACE REPOSLUG --destination <value> --source <value> --title <value> [--description
-    <value>] [-p <value>] [--reviewers <value>] [--toon]
+    <value>] [--draft] [-p <value>] [--reviewers <value>] [--toon]
 
 ARGUMENTS
   WORKSPACE  Workspace slug or UUID
@@ -660,6 +660,7 @@ FLAGS
   -p, --profile=<value>      Authentication profile name
       --description=<value>  Pull request description
       --destination=<value>  (required) Destination branch name
+      --draft                Create the pull request as a draft
       --reviewers=<value>    Comma-separated list of reviewer UUIDs
       --source=<value>       (required) Source branch name
       --title=<value>        (required) Pull request title

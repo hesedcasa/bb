@@ -545,6 +545,26 @@ describe('BitbucketApi', () => {
       const body = JSON.parse(options.body)
       expect(body.reviewers).to.be.undefined
     })
+
+    it('sets draft: true when requested', async () => {
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
+
+      await api.createPullRequest('ws', 'repo', 'PR', 'feat', 'main', undefined, undefined, false, true)
+
+      const [, options] = fetchStub.firstCall.args
+      const body = JSON.parse(options.body)
+      expect(body.draft).to.be.true
+    })
+
+    it('omits draft when not requested', async () => {
+      fetchStub.resolves(Response.json({id: 1}, {status: 201}))
+
+      await api.createPullRequest('ws', 'repo', 'PR', 'feat', 'main', undefined, undefined, false, false)
+
+      const [, options] = fetchStub.firstCall.args
+      const body = JSON.parse(options.body)
+      expect(body.draft).to.be.undefined
+    })
   })
 
   describe('updatePullRequest', () => {

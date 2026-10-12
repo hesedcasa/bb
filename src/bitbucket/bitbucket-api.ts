@@ -40,6 +40,7 @@ export class BitbucketApi {
     description?: string,
     reviewers?: string[],
     shouldAutoAddReviewers = true,
+    isDraft = false,
   ): Promise<ApiResult> {
     let finalReviewers = reviewers
 
@@ -71,6 +72,10 @@ export class BitbucketApi {
 
     if (finalReviewers && finalReviewers.length > 0) {
       body.reviewers = finalReviewers.map((uuid) => ({uuid}))
+    }
+
+    if (isDraft) {
+      body.draft = true
     }
 
     return this.request(`/repositories/${workspace}/${repoSlug}/pullrequests`, {
