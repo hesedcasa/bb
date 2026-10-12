@@ -208,9 +208,10 @@ describe('bitbucket-client', () => {
 
   describe('createPullRequest', () => {
     it('delegates with all params', async () => {
-      await createPullRequestFn(mockConfig, 'ws', 'repo', 'title', 'src', 'dst', 'desc', true, ['r1'])
-      expect(mockApiInstance.createPullRequest.calledWith('ws', 'repo', 'title', 'src', 'dst', 'desc', true, ['r1'])).to
-        .be.true
+      await createPullRequestFn(mockConfig, 'ws', 'repo', 'title', 'src', 'dst', 'desc', ['r1'], true, true)
+      expect(
+        mockApiInstance.createPullRequest.calledWith('ws', 'repo', 'title', 'src', 'dst', 'desc', ['r1'], true, true),
+      ).to.be.true
     })
   })
 

@@ -54,6 +54,7 @@ describe('pr:create', () => {
       undefined,
       undefined,
       true,
+      false,
     ])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(result).to.deep.equal(mockResult)
@@ -90,6 +91,31 @@ describe('pr:create', () => {
       'main',
       'A description',
       ['uuid1', 'uuid2', 'uuid3'],
+      true,
+      false,
+    ])
+    expect(clearClientsStub.calledOnce).to.be.true
+  })
+
+  it('passes --draft as draft=true', async () => {
+    const cmd = new PrCreate(
+      ['my-ws', 'my-repo', '--title', 'My PR', '--source', 'feature', '--destination', 'main', '--draft'],
+      {root: process.cwd(), runHook: stub().resolves({failures: [], successes: []})} as any,
+    )
+
+    await cmd.run()
+
+    expect(createPullRequestStub.calledOnce).to.be.true
+    expect(createPullRequestStub.firstCall.args).to.deep.equal([
+      mockAuth,
+      'my-ws',
+      'my-repo',
+      'My PR',
+      'feature',
+      'main',
+      undefined,
+      undefined,
+      true,
       true,
     ])
     expect(clearClientsStub.calledOnce).to.be.true

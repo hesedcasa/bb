@@ -20,6 +20,7 @@ export default class PrCreate extends BaseCommand {
   static override flags = {
     description: Flags.string({description: 'Pull request description', required: false}),
     destination: Flags.string({description: 'Destination branch name', required: true}),
+    draft: Flags.boolean({default: false, description: 'Create the pull request as a draft', required: false}),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     reviewers: Flags.string({description: 'Comma-separated list of reviewer UUIDs', required: false}),
     source: Flags.string({description: 'Source branch name', required: true}),
@@ -47,6 +48,7 @@ export default class PrCreate extends BaseCommand {
       flags.description,
       reviewers,
       true,
+      flags.draft,
     )
     clearClients()
 

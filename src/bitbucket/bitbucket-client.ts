@@ -125,6 +125,7 @@ export async function createPullRequest(
   description?: string,
   reviewers?: string[],
   shouldAutoAddReviewers = true,
+  isDraft = false,
 ): Promise<ApiResult> {
   const bb = await getClient(config)
   return bb.createPullRequest(
@@ -136,6 +137,7 @@ export async function createPullRequest(
     description,
     reviewers,
     shouldAutoAddReviewers,
+    isDraft,
   )
 }
 
