@@ -819,8 +819,8 @@ Update a pull request
 
 ```
 USAGE
-  $ bb bb pr update WORKSPACE REPOSLUG PULLREQUESTID [--description <value>] [-p <value>] [--title <value>]
-    [--toon]
+  $ bb bb pr update WORKSPACE REPOSLUG PULLREQUESTID [--description <value>] [--draft] [-p <value>] [--title
+    <value>] [--toon]
 
 ARGUMENTS
   WORKSPACE      Workspace slug or UUID
@@ -830,6 +830,7 @@ ARGUMENTS
 FLAGS
   -p, --profile=<value>      Authentication profile name
       --description=<value>  Pull request description
+      --[no-]draft           Mark the PR as draft (--draft) or ready for review (--no-draft)
       --title=<value>        Pull request title
       --toon                 Format output as toon
 

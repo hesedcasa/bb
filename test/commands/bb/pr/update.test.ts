@@ -87,6 +87,53 @@ describe('pr:update', () => {
     expect(clearClientsStub.calledOnce).to.be.true
   })
 
+  it('passes --draft as draft=true', async () => {
+    const cmd = new PrUpdate(['my-ws', 'my-repo', '42', '--draft'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+
+    await cmd.run()
+
+    expect(updatePullRequestStub.calledOnce).to.be.true
+    expect(updatePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, {draft: true}])
+    expect(clearClientsStub.calledOnce).to.be.true
+  })
+
+  it('passes --no-draft as draft=false', async () => {
+    const cmd = new PrUpdate(['my-ws', 'my-repo', '42', '--no-draft'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+
+    await cmd.run()
+
+    expect(updatePullRequestStub.calledOnce).to.be.true
+    expect(updatePullRequestStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', 42, {draft: false}])
+    expect(clearClientsStub.calledOnce).to.be.true
+  })
+
+  it('sends no draft field when the flag is omitted', async () => {
+    const cmd = new PrUpdate(['my-ws', 'my-repo', '42', '--title', 'Updated title'], {
+      root: process.cwd(),
+      runHook: stub().resolves({failures: [], successes: []}),
+    } as any)
+
+    await cmd.run()
+
+    expect(updatePullRequestStub.calledOnce).to.be.true
+    expect(updatePullRequestStub.firstCall.args).to.deep.equal([
+      mockAuth,
+      'my-ws',
+      'my-repo',
+      42,
+      {title: 'Updated title'},
+    ])
+    const fields = updatePullRequestStub.firstCall.args[4] as Record<string, unknown>
+    expect(fields).to.not.have.property('draft')
+    expect(clearClientsStub.calledOnce).to.be.true
+  })
+
   it('returns early when config is missing', async () => {
     createProfileManagerStub.returns({loadAuthConfig: stub().resolves(null)})
 
