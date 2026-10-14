@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.0](https://github.com/hesedcasa/bb/compare/v0.11.0...v0.12.0) (2026-10-14)
+
+
+### 🎉 Features
+
+* add --draft/--no-draft flag to bb bb pr update ([79875ab](https://github.com/hesedcasa/bb/commit/79875abfbd7701578d72906aaae91c89f958f854))
+
+
+### 🛠️ Fixes
+
+* bump @oclif/core to 5.1.8 and expect exit 2 on missing config ([#164](https://github.com/hesedcasa/bb/issues/164)) ([f877e06](https://github.com/hesedcasa/bb/commit/f877e0654328f5091eec3c12e39127b393c7404d))
+
 ## [0.11.0](https://github.com/hesedcasa/bb/compare/v0.10.4...v0.11.0) (2026-10-12)
 
 
