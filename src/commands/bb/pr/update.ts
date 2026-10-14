@@ -17,6 +17,11 @@ export default class PrUpdate extends BaseCommand {
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo 1 --title "Updated title"']
   static override flags = {
     description: Flags.string({description: 'Pull request description', required: false}),
+    draft: Flags.boolean({
+      allowNo: true,
+      description: 'Mark the PR as draft (--draft) or ready for review (--no-draft)',
+      required: false,
+    }),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     title: Flags.string({description: 'Pull request title', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
@@ -32,6 +37,7 @@ export default class PrUpdate extends BaseCommand {
 
     const fields: Record<string, unknown> = {}
     if (flags.title) fields.title = flags.title
+    if (flags.draft !== undefined) fields.draft = flags.draft
     // eslint-disable-next-line unicorn/prefer-string-replace-all
     if (flags.description) fields.description = flags.description.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
 
