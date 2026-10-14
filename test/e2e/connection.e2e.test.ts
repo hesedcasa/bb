@@ -29,7 +29,8 @@ describe('e2e: connection', () => {
 
   it('errors on an unknown profile rather than falling back to the default', async () => {
     const {code, stdout} = await runCli(['bb', 'workspace', 'list', '--profile', 'nosuch'], configDir)
-    expect(code).to.equal(1)
+    // @oclif/core >= 5.1.8 exits with the error's own code; this.error() defaults to 2.
+    expect(code).to.equal(2)
     expect(JSON.parse(stdout)).to.deep.equal({error: 'Missing authentication config.'})
   })
 
