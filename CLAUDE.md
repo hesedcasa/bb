@@ -197,7 +197,7 @@ Five rules specific to this suite:
   hand-written commands do not.
 - **The exit-code contract is not jira's.** A failed `ApiResult` still exits 0 —
   the failure lives in the payload (`success: false`, `error`). Only thrown
-  errors exit non-zero: missing config → 1, `auth test` failure → 2.
+  errors exit non-zero: missing config → 2 (the `this.error()` default, honoured by `@oclif/core` ≥ 5.1.8), `auth test` failure → 2.
 - **Fixtures are created with raw `fetch` in `test/e2e/fixtures.ts`, never
   through the CLI** — they are the oracle the CLI is checked against. Every
   fixture repo is named `e2e-<run id>-…`; that prefix is the structural bound
