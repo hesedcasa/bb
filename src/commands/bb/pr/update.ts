@@ -3,6 +3,7 @@ import {Args, Flags} from '@oclif/core'
 
 import {BaseCommand} from '../../../base-command.js'
 import {clearClients, updatePullRequest} from '../../../bitbucket/bitbucket-client.js'
+import {readTextValue, unescapeNewlines} from '../../../text-input.js'
 
 export default class PrUpdate extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
@@ -14,9 +15,16 @@ export default class PrUpdate extends BaseCommand {
 
   /* eslint-enable perfectionist/sort-objects */
   static override description = 'Update a pull request'
-  static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo 1 --title "Updated title"']
+  static override examples = [
+    '<%= config.bin %> <%= command.id %> my-workspace my-repo 1 --title "Updated title"',
+    '<%= config.bin %> <%= command.id %> my-workspace my-repo 1 --description @pr.md',
+  ]
+
   static override flags = {
-    description: Flags.string({description: 'Pull request description', required: false}),
+    description: Flags.string({
+      description: 'Pull request description. @<path> reads it from that file (@- for stdin; @@ for a literal @)',
+      required: false,
+    }),
     draft: Flags.boolean({
       allowNo: true,
       description: 'Mark the PR as draft (--draft) or ready for review (--no-draft)',
@@ -38,8 +46,7 @@ export default class PrUpdate extends BaseCommand {
     const fields: Record<string, unknown> = {}
     if (flags.title) fields.title = flags.title
     if (flags.draft !== undefined) fields.draft = flags.draft
-    // eslint-disable-next-line unicorn/prefer-string-replace-all
-    if (flags.description) fields.description = flags.description.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
+    if (flags.description) fields.description = await readTextValue(flags.description, unescapeNewlines)
 
     const result = await updatePullRequest(auth, args.workspace, args.repoSlug, args.pullRequestId, fields)
     clearClients()

@@ -66,8 +66,7 @@ export class BitbucketApi {
     }
 
     if (description) {
-      // eslint-disable-next-line unicorn/prefer-string-replace-all
-      body.description = description.replace(/\\n/g, '\n').replace(/\\r/g, '\r')
+      body.description = description
     }
 
     if (finalReviewers && finalReviewers.length > 0) {

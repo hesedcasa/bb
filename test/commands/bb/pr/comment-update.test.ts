@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {expect} from 'chai'
 import esmock from 'esmock'
+import {mkdtempSync, rmSync, writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import path from 'node:path'
 import {type SinonStub, stub} from 'sinon'
 
 describe('pr:comment-update', () => {
@@ -93,5 +96,38 @@ describe('pr:comment-update', () => {
     ])
     expect(formatAsToonStub.calledOnceWith(mockResult)).to.be.true
     expect(logStub.calledWith('toon-output')).to.be.true
+  })
+
+  describe('file input', () => {
+    let dir: string
+    let file: string
+
+    beforeEach(() => {
+      dir = mkdtempSync(path.join(tmpdir(), 'bb-file-input-'))
+      file = path.join(dir, 'text.md')
+      writeFileSync(file, 'line one\\nstill line one\nline two')
+    })
+
+    afterEach(() => {
+      rmSync(dir, {force: true, recursive: true})
+    })
+
+    it('reads an @<path> --body from the file verbatim', async () => {
+      await new PrCommentUpdate(['my-ws', 'my-repo', '42', '100', '--body', `@${file}`], {
+        root: process.cwd(),
+        runHook: stub().resolves({failures: [], successes: []}),
+      } as any).run()
+
+      expect(updatePullRequestCommentStub.firstCall.args[5]).to.equal('line one\\nstill line one\nline two')
+    })
+
+    it('keeps a literal leading @ escaped as @@', async () => {
+      await new PrCommentUpdate(['my-ws', 'my-repo', '42', '100', '--body', '@@dev please look'], {
+        root: process.cwd(),
+        runHook: stub().resolves({failures: [], successes: []}),
+      } as any).run()
+
+      expect(updatePullRequestCommentStub.firstCall.args[5]).to.equal('@dev please look')
+    })
   })
 })

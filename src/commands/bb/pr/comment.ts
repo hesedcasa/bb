@@ -3,6 +3,7 @@ import {Args, Flags} from '@oclif/core'
 
 import {BaseCommand} from '../../../base-command.js'
 import {clearClients, createPullRequestComment} from '../../../bitbucket/bitbucket-client.js'
+import {readTextValue} from '../../../text-input.js'
 
 export default class PrComment extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
@@ -17,10 +18,14 @@ export default class PrComment extends BaseCommand {
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-workspace my-repo 42 --body "Looks good!"',
     '<%= config.bin %> <%= command.id %> my-workspace my-repo 42 --body "Fix this" --file src/foo.ts --line 15',
+    '<%= config.bin %> <%= command.id %> my-workspace my-repo 42 --body @review.md',
   ]
 
   static override flags = {
-    body: Flags.string({description: 'Comment text', required: true}),
+    body: Flags.string({
+      description: 'Comment text. @<path> reads it from that file (@- for stdin; @@ for a literal @)',
+      required: true,
+    }),
     file: Flags.string({description: 'File path for inline comment', required: false}),
     line: Flags.integer({description: 'Line number for inline comment', required: false}),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
@@ -34,6 +39,7 @@ export default class PrComment extends BaseCommand {
       this.error('--file and --line must be used together')
     }
 
+    const body = await readTextValue(flags.body)
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile, 'bb-config.json')
     const auth = await loadAuthConfig()
     if (!auth) {
@@ -42,7 +48,7 @@ export default class PrComment extends BaseCommand {
 
     const inline = flags.file && flags.line !== undefined ? {line: flags.line, path: flags.file} : undefined
 
-    const result = await createPullRequestComment(auth, args.workspace, args.repoSlug, args.prId, flags.body, inline)
+    const result = await createPullRequestComment(auth, args.workspace, args.repoSlug, args.prId, body, inline)
     clearClients()
 
     if (flags.toon) {
