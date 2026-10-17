@@ -3,6 +3,7 @@ import {Args, Flags} from '@oclif/core'
 
 import {BaseCommand} from '../../../base-command.js'
 import {clearClients, createPullRequest} from '../../../bitbucket/bitbucket-client.js'
+import {readTextValue, unescapeNewlines} from '../../../text-input.js'
 
 export default class PrCreate extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
@@ -15,10 +16,14 @@ export default class PrCreate extends BaseCommand {
   static override description = 'Create a new pull request'
   static override examples = [
     '<%= config.bin %> <%= command.id %> my-workspace my-repo --title "My PR" --source feature-branch --destination main',
+    '<%= config.bin %> <%= command.id %> my-workspace my-repo --title "My PR" --source feature-branch --destination main --description @pr.md',
   ]
 
   static override flags = {
-    description: Flags.string({description: 'Pull request description', required: false}),
+    description: Flags.string({
+      description: 'Pull request description. @<path> reads it from that file (@- for stdin; @@ for a literal @)',
+      required: false,
+    }),
     destination: Flags.string({description: 'Destination branch name', required: true}),
     draft: Flags.boolean({default: false, description: 'Create the pull request as a draft', required: false}),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
@@ -36,6 +41,7 @@ export default class PrCreate extends BaseCommand {
       this.error(`Missing authentication config.`)
     }
 
+    const description = flags.description && (await readTextValue(flags.description, unescapeNewlines))
     const reviewers = flags.reviewers ? flags.reviewers.split(',').map((r: string) => r.trim()) : undefined
 
     const result = await createPullRequest(
@@ -45,7 +51,7 @@ export default class PrCreate extends BaseCommand {
       flags.title,
       flags.source,
       flags.destination,
-      flags.description,
+      description,
       reviewers,
       true,
       flags.draft,

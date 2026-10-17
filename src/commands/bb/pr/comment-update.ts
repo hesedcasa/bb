@@ -3,6 +3,7 @@ import {Args, Flags} from '@oclif/core'
 
 import {BaseCommand} from '../../../base-command.js'
 import {clearClients, updatePullRequestComment} from '../../../bitbucket/bitbucket-client.js'
+import {readTextValue} from '../../../text-input.js'
 
 export default class PrCommentUpdate extends BaseCommand {
   /* eslint-disable perfectionist/sort-objects -- Oclif parses args positionally, so declaration order is significant */
@@ -20,27 +21,24 @@ export default class PrCommentUpdate extends BaseCommand {
   ]
 
   static override flags = {
-    body: Flags.string({description: 'New comment text', required: true}),
+    body: Flags.string({
+      description: 'New comment text. @<path> reads it from that file (@- for stdin; @@ for a literal @)',
+      required: true,
+    }),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
 
   public async run(): Promise<ApiResult> {
     const {args, flags} = await this.parse(PrCommentUpdate)
+    const body = await readTextValue(flags.body)
     const {loadAuthConfig} = createProfileManager(this.config, flags.profile, 'bb-config.json')
     const auth = await loadAuthConfig()
     if (!auth) {
       this.error(`Missing authentication config.`)
     }
 
-    const result = await updatePullRequestComment(
-      auth,
-      args.workspace,
-      args.repoSlug,
-      args.prId,
-      args.commentId,
-      flags.body,
-    )
+    const result = await updatePullRequestComment(auth, args.workspace, args.repoSlug, args.prId, args.commentId, body)
     clearClients()
 
     if (flags.toon) {
