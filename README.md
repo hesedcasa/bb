@@ -26,7 +26,7 @@ $ npm install -g @hesed/bb
 $ bb COMMAND
 running command...
 $ bb (--version)
-@hesed/bb/0.12.0 linux-x64 node-v22.23.3
+@hesed/bb/0.13.0 linux-x64 node-v22.23.3
 $ bb --help [COMMAND]
 USAGE
   $ bb COMMAND
@@ -98,7 +98,7 @@ EXAMPLES
   $ bb bb auth add -p prod
 ```
 
-_See code: [src/commands/bb/auth/add.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/auth/add.ts)_
+_See code: [src/commands/bb/auth/add.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/auth/add.ts)_
 
 ## `bb bb auth delete`
 
@@ -123,7 +123,7 @@ EXAMPLES
   $ bb bb auth delete -p prod
 ```
 
-_See code: [src/commands/bb/auth/delete.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/auth/delete.ts)_
+_See code: [src/commands/bb/auth/delete.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/auth/delete.ts)_
 
 ## `bb bb auth list`
 
@@ -143,7 +143,7 @@ EXAMPLES
   $ bb bb auth list
 ```
 
-_See code: [src/commands/bb/auth/list.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/auth/list.ts)_
+_See code: [src/commands/bb/auth/list.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/auth/list.ts)_
 
 ## `bb bb auth profile`
 
@@ -168,7 +168,7 @@ EXAMPLES
   $ bb bb auth profile --default test
 ```
 
-_See code: [src/commands/bb/auth/profile.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/auth/profile.ts)_
+_See code: [src/commands/bb/auth/profile.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/auth/profile.ts)_
 
 ## `bb bb auth test`
 
@@ -193,7 +193,7 @@ EXAMPLES
   $ bb bb auth test -p prod
 ```
 
-_See code: [src/commands/bb/auth/test.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/auth/test.ts)_
+_See code: [src/commands/bb/auth/test.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/auth/test.ts)_
 
 ## `bb bb auth update`
 
@@ -221,7 +221,7 @@ EXAMPLES
   $ bb bb auth update -p test
 ```
 
-_See code: [src/commands/bb/auth/update.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/auth/update.ts)_
+_See code: [src/commands/bb/auth/update.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/auth/update.ts)_
 
 ## `bb bb commit WORKSPACE REPOSLUG COMMITSHA`
 
@@ -247,7 +247,7 @@ EXAMPLES
   $ bb bb commit my-workspace my-repo a1b2c3d
 ```
 
-_See code: [src/commands/bb/commit/index.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/commit/index.ts)_
+_See code: [src/commands/bb/commit/index.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/commit/index.ts)_
 
 ## `bb bb commit list WORKSPACE REPOSLUG`
 
@@ -279,7 +279,7 @@ EXAMPLES
   $ bb bb commit list my-workspace my-repo --include feature-branch --exclude main
 ```
 
-_See code: [src/commands/bb/commit/list.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/commit/list.ts)_
+_See code: [src/commands/bb/commit/list.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/commit/list.ts)_
 
 ## `bb bb pipeline WORKSPACE REPOSLUG`
 
@@ -307,7 +307,7 @@ EXAMPLES
   $ bb bb pipeline my-workspace my-repo
 ```
 
-_See code: [src/commands/bb/pipeline/index.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pipeline/index.ts)_
+_See code: [src/commands/bb/pipeline/index.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pipeline/index.ts)_
 
 ## `bb bb pipeline get WORKSPACE REPOSLUG PIPELINEUUID`
 
@@ -333,7 +333,7 @@ EXAMPLES
   $ bb bb pipeline get my-workspace my-repo {uuid}
 ```
 
-_See code: [src/commands/bb/pipeline/get.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pipeline/get.ts)_
+_See code: [src/commands/bb/pipeline/get.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pipeline/get.ts)_
 
 ## `bb bb pipeline trigger WORKSPACE REPOSLUG`
 
@@ -362,7 +362,7 @@ EXAMPLES
   $ bb bb pipeline trigger my-workspace my-repo --branch main --custom my-pipeline
 ```
 
-_See code: [src/commands/bb/pipeline/trigger.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pipeline/trigger.ts)_
+_See code: [src/commands/bb/pipeline/trigger.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pipeline/trigger.ts)_
 
 ## `bb bb pr WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -388,7 +388,7 @@ EXAMPLES
   $ bb bb pr my-workspace my-repo 123
 ```
 
-_See code: [src/commands/bb/pr/index.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/index.ts)_
+_See code: [src/commands/bb/pr/index.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/index.ts)_
 
 ## `bb bb pr activity WORKSPACE REPOSLUG PRID`
 
@@ -416,7 +416,7 @@ EXAMPLES
   $ bb bb pr activity my-workspace my-repo 42
 ```
 
-_See code: [src/commands/bb/pr/activity.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/activity.ts)_
+_See code: [src/commands/bb/pr/activity.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/activity.ts)_
 
 ## `bb bb pr approve WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -442,7 +442,7 @@ EXAMPLES
   $ bb bb pr approve my-workspace my-repo 123
 ```
 
-_See code: [src/commands/bb/pr/approve.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/approve.ts)_
+_See code: [src/commands/bb/pr/approve.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/approve.ts)_
 
 ## `bb bb pr comment WORKSPACE REPOSLUG PRID`
 
@@ -459,7 +459,7 @@ ARGUMENTS
 
 FLAGS
   -p, --profile=<value>  Authentication profile name
-      --body=<value>     (required) Comment text
+      --body=<value>     (required) Comment text. @<path> reads it from that file (@- for stdin; @@ for a literal @)
       --file=<value>     File path for inline comment
       --line=<value>     Line number for inline comment
       --toon             Format output as toon
@@ -471,9 +471,11 @@ EXAMPLES
   $ bb bb pr comment my-workspace my-repo 42 --body "Looks good!"
 
   $ bb bb pr comment my-workspace my-repo 42 --body "Fix this" --file src/foo.ts --line 15
+
+  $ bb bb pr comment my-workspace my-repo 42 --body @review.md
 ```
 
-_See code: [src/commands/bb/pr/comment.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/comment.ts)_
+_See code: [src/commands/bb/pr/comment.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/comment.ts)_
 
 ## `bb bb pr comment-delete WORKSPACE REPOSLUG PRID COMMENTID`
 
@@ -500,7 +502,7 @@ EXAMPLES
   $ bb bb pr comment-delete my-workspace my-repo 42 100
 ```
 
-_See code: [src/commands/bb/pr/comment-delete.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/comment-delete.ts)_
+_See code: [src/commands/bb/pr/comment-delete.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/comment-delete.ts)_
 
 ## `bb bb pr comment-reply WORKSPACE REPOSLUG PRID COMMENTID`
 
@@ -518,7 +520,7 @@ ARGUMENTS
 
 FLAGS
   -p, --profile=<value>  Authentication profile name
-      --body=<value>     (required) Reply text
+      --body=<value>     (required) Reply text. @<path> reads it from that file (@- for stdin; @@ for a literal @)
       --toon             Format output as toon
 
 DESCRIPTION
@@ -528,7 +530,7 @@ EXAMPLES
   $ bb bb pr comment-reply my-workspace my-repo 42 100 --body "Thanks for the feedback!"
 ```
 
-_See code: [src/commands/bb/pr/comment-reply.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/comment-reply.ts)_
+_See code: [src/commands/bb/pr/comment-reply.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/comment-reply.ts)_
 
 ## `bb bb pr comment-resolve WORKSPACE REPOSLUG PRID COMMENTID`
 
@@ -555,7 +557,7 @@ EXAMPLES
   $ bb bb pr comment-resolve my-workspace my-repo 42 100
 ```
 
-_See code: [src/commands/bb/pr/comment-resolve.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/comment-resolve.ts)_
+_See code: [src/commands/bb/pr/comment-resolve.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/comment-resolve.ts)_
 
 ## `bb bb pr comment-update WORKSPACE REPOSLUG PRID COMMENTID`
 
@@ -573,7 +575,7 @@ ARGUMENTS
 
 FLAGS
   -p, --profile=<value>  Authentication profile name
-      --body=<value>     (required) New comment text
+      --body=<value>     (required) New comment text. @<path> reads it from that file (@- for stdin; @@ for a literal @)
       --toon             Format output as toon
 
 DESCRIPTION
@@ -583,7 +585,7 @@ EXAMPLES
   $ bb bb pr comment-update my-workspace my-repo 42 100 --body "Updated comment text"
 ```
 
-_See code: [src/commands/bb/pr/comment-update.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/comment-update.ts)_
+_See code: [src/commands/bb/pr/comment-update.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/comment-update.ts)_
 
 ## `bb bb pr comments WORKSPACE REPOSLUG PRID`
 
@@ -611,7 +613,7 @@ EXAMPLES
   $ bb bb pr comments my-workspace my-repo 42
 ```
 
-_See code: [src/commands/bb/pr/comments.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/comments.ts)_
+_See code: [src/commands/bb/pr/comments.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/comments.ts)_
 
 ## `bb bb pr commits WORKSPACE REPOSLUG PRID`
 
@@ -641,7 +643,7 @@ EXAMPLES
   $ bb bb pr commits my-workspace my-repo 42 --page 67Fg
 ```
 
-_See code: [src/commands/bb/pr/commits.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/commits.ts)_
+_See code: [src/commands/bb/pr/commits.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/commits.ts)_
 
 ## `bb bb pr create WORKSPACE REPOSLUG`
 
@@ -658,7 +660,8 @@ ARGUMENTS
 
 FLAGS
   -p, --profile=<value>      Authentication profile name
-      --description=<value>  Pull request description
+      --description=<value>  Pull request description. @<path> reads it from that file (@- for stdin; @@ for a literal
+                             @)
       --destination=<value>  (required) Destination branch name
       --draft                Create the pull request as a draft
       --reviewers=<value>    Comma-separated list of reviewer UUIDs
@@ -671,9 +674,11 @@ DESCRIPTION
 
 EXAMPLES
   $ bb bb pr create my-workspace my-repo --title "My PR" --source feature-branch --destination main
+
+  $ bb bb pr create my-workspace my-repo --title "My PR" --source feature-branch --destination main --description @pr.md
 ```
 
-_See code: [src/commands/bb/pr/create.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/create.ts)_
+_See code: [src/commands/bb/pr/create.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/create.ts)_
 
 ## `bb bb pr decline WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -699,7 +704,7 @@ EXAMPLES
   $ bb bb pr decline my-workspace my-repo 123
 ```
 
-_See code: [src/commands/bb/pr/decline.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/decline.ts)_
+_See code: [src/commands/bb/pr/decline.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/decline.ts)_
 
 ## `bb bb pr diff WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -724,7 +729,7 @@ EXAMPLES
   $ bb bb pr diff my-workspace my-repo 123
 ```
 
-_See code: [src/commands/bb/pr/diff.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/diff.ts)_
+_See code: [src/commands/bb/pr/diff.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/diff.ts)_
 
 ## `bb bb pr list WORKSPACE REPOSLUG`
 
@@ -754,7 +759,7 @@ EXAMPLES
   $ bb bb pr list my-workspace my-repo
 ```
 
-_See code: [src/commands/bb/pr/list.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/list.ts)_
+_See code: [src/commands/bb/pr/list.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/list.ts)_
 
 ## `bb bb pr merge WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -785,7 +790,7 @@ EXAMPLES
   $ bb bb pr merge my-workspace my-repo 123
 ```
 
-_See code: [src/commands/bb/pr/merge.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/merge.ts)_
+_See code: [src/commands/bb/pr/merge.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/merge.ts)_
 
 ## `bb bb pr unapprove WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -811,7 +816,7 @@ EXAMPLES
   $ bb bb pr unapprove my-workspace my-repo 123
 ```
 
-_See code: [src/commands/bb/pr/unapprove.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/unapprove.ts)_
+_See code: [src/commands/bb/pr/unapprove.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/unapprove.ts)_
 
 ## `bb bb pr update WORKSPACE REPOSLUG PULLREQUESTID`
 
@@ -829,7 +834,8 @@ ARGUMENTS
 
 FLAGS
   -p, --profile=<value>      Authentication profile name
-      --description=<value>  Pull request description
+      --description=<value>  Pull request description. @<path> reads it from that file (@- for stdin; @@ for a literal
+                             @)
       --[no-]draft           Mark the PR as draft (--draft) or ready for review (--no-draft)
       --title=<value>        Pull request title
       --toon                 Format output as toon
@@ -839,9 +845,11 @@ DESCRIPTION
 
 EXAMPLES
   $ bb bb pr update my-workspace my-repo 1 --title "Updated title"
+
+  $ bb bb pr update my-workspace my-repo 1 --description @pr.md
 ```
 
-_See code: [src/commands/bb/pr/update.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/pr/update.ts)_
+_See code: [src/commands/bb/pr/update.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/pr/update.ts)_
 
 ## `bb bb repo WORKSPACE REPOSLUG`
 
@@ -866,7 +874,7 @@ EXAMPLES
   $ bb bb repo my-workspace my-repo
 ```
 
-_See code: [src/commands/bb/repo/index.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/repo/index.ts)_
+_See code: [src/commands/bb/repo/index.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/repo/index.ts)_
 
 ## `bb bb repo create WORKSPACE REPOSLUG`
 
@@ -898,7 +906,7 @@ EXAMPLES
   $ bb bb repo create my-workspace my-repo --private --description "My new repo"
 ```
 
-_See code: [src/commands/bb/repo/create.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/repo/create.ts)_
+_See code: [src/commands/bb/repo/create.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/repo/create.ts)_
 
 ## `bb bb repo delete WORKSPACE REPOSLUG`
 
@@ -923,7 +931,7 @@ EXAMPLES
   $ bb bb repo delete my-workspace my-repo
 ```
 
-_See code: [src/commands/bb/repo/delete.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/repo/delete.ts)_
+_See code: [src/commands/bb/repo/delete.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/repo/delete.ts)_
 
 ## `bb bb repo list WORKSPACE`
 
@@ -952,7 +960,7 @@ EXAMPLES
   $ bb bb repo list my-workspace
 ```
 
-_See code: [src/commands/bb/repo/list.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/repo/list.ts)_
+_See code: [src/commands/bb/repo/list.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/repo/list.ts)_
 
 ## `bb bb workspace WORKSPACE`
 
@@ -976,7 +984,7 @@ EXAMPLES
   $ bb bb workspace my-workspace
 ```
 
-_See code: [src/commands/bb/workspace/index.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/workspace/index.ts)_
+_See code: [src/commands/bb/workspace/index.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/workspace/index.ts)_
 
 ## `bb bb workspace list`
 
@@ -999,5 +1007,5 @@ EXAMPLES
   $ bb bb workspace list
 ```
 
-_See code: [src/commands/bb/workspace/list.ts](https://github.com/hesedcasa/bb/blob/v0.12.0/src/commands/bb/workspace/list.ts)_
+_See code: [src/commands/bb/workspace/list.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/workspace/list.ts)_
 <!-- commandsstop -->
