@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/hesedcasa/bb/compare/v0.13.0...v0.14.0) (2026-10-30)
+
+
+### 🎉 Features
+
+* **branch:** add bb branch get, list, and create commands ([#179](https://github.com/hesedcasa/bb/issues/179)) ([c806751](https://github.com/hesedcasa/bb/commit/c8067515c4f2ac48267c6c948e7cabff75258427))
+
 ## [0.13.0](https://github.com/hesedcasa/bb/compare/v0.12.0...v0.13.0) (2026-10-17)
 
 
