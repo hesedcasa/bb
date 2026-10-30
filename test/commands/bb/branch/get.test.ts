@@ -102,13 +102,14 @@ describe('branch:get', () => {
   it('throws when the branch argument is missing', async () => {
     const cmd = makeCommand(['my-ws', 'my-repo'])
 
+    let caught: unknown
     try {
       await cmd.run()
-      expect.fail('should have thrown')
-    } catch {
-      // expected parse error
+    } catch (error: unknown) {
+      caught = error
     }
 
+    expect(caught).to.be.instanceOf(Error)
     expect(getBranchStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
   })

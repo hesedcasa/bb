@@ -116,13 +116,14 @@ describe('branch:list', () => {
   it('throws when repoSlug is missing', async () => {
     const cmd = makeCommand(['my-ws'])
 
+    let caught: unknown
     try {
       await cmd.run()
-      expect.fail('should have thrown')
-    } catch {
-      // expected parse error
+    } catch (error: unknown) {
+      caught = error
     }
 
+    expect(caught).to.be.instanceOf(Error)
     expect(listBranchesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
   })
@@ -130,13 +131,14 @@ describe('branch:list', () => {
   it('throws when --page is not an integer', async () => {
     const cmd = makeCommand(['my-ws', 'my-repo', '--page', 'abc'])
 
+    let caught: unknown
     try {
       await cmd.run()
-      expect.fail('should have thrown')
-    } catch {
-      // expected flag parse error
+    } catch (error: unknown) {
+      caught = error
     }
 
+    expect(caught).to.be.instanceOf(Error)
     expect(listBranchesStub.called).to.be.false
     expect(clearClientsStub.called).to.be.false
   })

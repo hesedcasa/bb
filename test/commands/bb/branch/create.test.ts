@@ -245,13 +245,14 @@ describe('branch:create', () => {
     it('throws when --name is missing', async () => {
       const cmd = makeCommand(['my-ws', 'my-repo'])
 
+      let caught: unknown
       try {
         await cmd.run()
-        expect.fail('should have thrown')
-      } catch {
-        // expected parse error
+      } catch (error: unknown) {
+        caught = error
       }
 
+      expect(caught).to.be.instanceOf(Error)
       expect(getRepositoryStub.called).to.be.false
       expect(createBranchStub.called).to.be.false
       expect(clearClientsStub.called).to.be.false
@@ -260,13 +261,14 @@ describe('branch:create', () => {
     it('throws when repoSlug is missing', async () => {
       const cmd = makeCommand(['my-ws', '--name', 'feature/x'])
 
+      let caught: unknown
       try {
         await cmd.run()
-        expect.fail('should have thrown')
-      } catch {
-        // expected parse error
+      } catch (error: unknown) {
+        caught = error
       }
 
+      expect(caught).to.be.instanceOf(Error)
       expect(getRepositoryStub.called).to.be.false
       expect(clearClientsStub.called).to.be.false
     })
@@ -319,13 +321,15 @@ describe('branch:create', () => {
 
       const cmd = makeCommand(['my-ws', 'my-repo', '--name', 'feature/x'])
 
+      let caught: unknown
       try {
         await cmd.run()
-        expect.fail('should have thrown')
-      } catch {
-        // expected unexpected-exception path
+      } catch (error: unknown) {
+        caught = error
       }
 
+      expect(caught).to.be.instanceOf(Error)
+      expect((caught as Error).message).to.equal('transport blew up')
       expect(createBranchStub.called).to.be.false
       expect(clearClientsStub.calledOnce).to.be.true
     })
