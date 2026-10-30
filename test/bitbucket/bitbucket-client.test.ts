@@ -25,6 +25,9 @@ describe('bitbucket-client', () => {
   let listPipelinesFn: any
   let getPipelineFn: any
   let triggerPipelineFn: any
+  let getBranchFn: any
+  let listBranchesFn: any
+  let createBranchFn: any
 
   let mockApiInstance: Record<string, SinonStub>
   let BitbucketApiStub: SinonStub
@@ -33,14 +36,17 @@ describe('bitbucket-client', () => {
     mockApiInstance = {
       approvePullRequest: stub().resolves(mockResult),
       clearClients: stub(),
+      createBranch: stub().resolves(mockResult),
       createPullRequest: stub().resolves(mockResult),
       createRepository: stub().resolves(mockResult),
       declinePullRequest: stub().resolves(mockResult),
       deleteRepository: stub().resolves(mockResult),
+      getBranch: stub().resolves(mockResult),
       getPipeline: stub().resolves(mockResult),
       getPullRequest: stub().resolves(mockResult),
       getRepository: stub().resolves(mockResult),
       getWorkspace: stub().resolves(mockResult),
+      listBranches: stub().resolves(mockResult),
       listPipelines: stub().resolves(mockResult),
       listPullRequests: stub().resolves(mockResult),
       listRepositories: stub().resolves(mockResult),
@@ -76,6 +82,9 @@ describe('bitbucket-client', () => {
     listPipelinesFn = mod.listPipelines
     getPipelineFn = mod.getPipeline
     triggerPipelineFn = mod.triggerPipeline
+    getBranchFn = mod.getBranch
+    listBranchesFn = mod.listBranches
+    createBranchFn = mod.createBranch
   })
 
   afterEach(() => {
@@ -270,6 +279,58 @@ describe('bitbucket-client', () => {
       const target = {refName: 'main', refType: 'branch'}
       await triggerPipelineFn(mockConfig, 'ws', 'repo', target)
       expect(mockApiInstance.triggerPipeline.calledWith('ws', 'repo', target)).to.be.true
+    })
+  })
+
+  describe('getBranch', () => {
+    it('delegates with workspace, repo, and branch name', async () => {
+      const result = await getBranchFn(mockConfig, 'ws', 'repo', 'feature/x')
+      expect(mockApiInstance.getBranch.calledOnce).to.be.true
+      expect(mockApiInstance.getBranch.calledWith('ws', 'repo', 'feature/x')).to.be.true
+      expect(result).to.deep.equal(mockResult)
+    })
+
+    it('passes a failing result through unchanged', async () => {
+      const failure = {error: 'nope', success: false}
+      mockApiInstance.getBranch.resolves(failure)
+      const result = await getBranchFn(mockConfig, 'ws', 'repo', 'nope')
+      expect(result).to.deep.equal(failure)
+    })
+  })
+
+  describe('listBranches', () => {
+    it('delegates with an empty options object when none are given', async () => {
+      await listBranchesFn(mockConfig, 'ws', 'repo')
+      expect(mockApiInstance.listBranches.calledOnce).to.be.true
+      expect(mockApiInstance.listBranches.calledWith('ws', 'repo', {})).to.be.true
+    })
+
+    it('preserves supplied options', async () => {
+      const opts = {page: 2, pagelen: 25, q: 'name ~ "feature/x"', sort: 'name'}
+      await listBranchesFn(mockConfig, 'ws', 'repo', opts)
+      expect(mockApiInstance.listBranches.calledWith('ws', 'repo', opts)).to.be.true
+    })
+
+    it('propagates the api result unchanged', async () => {
+      const result = await listBranchesFn(mockConfig, 'ws', 'repo', {page: 1, pagelen: 10})
+      expect(result).to.deep.equal(mockResult)
+    })
+  })
+
+  describe('createBranch', () => {
+    it('delegates with name and targetHash', async () => {
+      const result = await createBranchFn(mockConfig, 'ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+      expect(mockApiInstance.createBranch.calledOnce).to.be.true
+      expect(mockApiInstance.createBranch.calledWith('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})).to.be
+        .true
+      expect(result).to.deep.equal(mockResult)
+    })
+
+    it('passes a failing result through unchanged', async () => {
+      const failure = {error: {message: 'denied'}, success: false}
+      mockApiInstance.createBranch.resolves(failure)
+      const result = await createBranchFn(mockConfig, 'ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+      expect(result).to.deep.equal(failure)
     })
   })
 })

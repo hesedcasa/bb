@@ -845,6 +845,225 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('getBranch', () => {
+    it('calls GET /repositories/:workspace/:repoSlug/refs/branches/:branch', async () => {
+      fetchStub.resolves(Response.json({name: 'main'}, {status: 200}))
+
+      await api.getBranch('ws', 'repo', 'main')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches/main')
+      expect(options.method).to.equal('GET')
+    })
+
+    it('returns the ref payload unchanged', async () => {
+      const ref = {name: 'main', target: {hash: 'abc123'}}
+      fetchStub.resolves(Response.json(ref, {status: 200}))
+
+      const result = await api.getBranch('ws', 'repo', 'main')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal(ref)
+    })
+
+    it('encodes a slash in the branch name exactly once', async () => {
+      fetchStub.resolves(Response.json({name: 'feature/x'}, {status: 200}))
+
+      await api.getBranch('ws', 'repo', 'feature/x')
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches/feature%2Fx')
+    })
+
+    it('encodes spaces, percent, question mark and hash in the branch name', async () => {
+      fetchStub.resolves(Response.json({}, {status: 200}))
+
+      await api.getBranch('ws', 'repo', 'feature branch')
+      expect(fetchStub.firstCall.args[0]).to.equal(
+        'https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches/feature%20branch',
+      )
+
+      await api.getBranch('ws', 'repo', '50%off')
+      expect(fetchStub.secondCall.args[0]).to.equal(
+        'https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches/50%25off',
+      )
+
+      await api.getBranch('ws', 'repo', 'bug?fix')
+      expect(fetchStub.thirdCall.args[0]).to.equal(
+        'https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches/bug%3Ffix',
+      )
+
+      await api.getBranch('ws', 'repo', 'c#7')
+      expect(fetchStub.lastCall.args[0]).to.equal(
+        'https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches/c%237',
+      )
+    })
+
+    it('reports failure without throwing when the branch is missing', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'Not found'}}, {status: 404}))
+
+      const result = await api.getBranch('ws', 'repo', 'nope')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal({error: {message: 'Not found'}})
+    })
+  })
+
+  describe('listBranches', () => {
+    it('calls GET /repositories/:workspace/:repoSlug/refs/branches with default pagination', async () => {
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
+
+      await api.listBranches('ws', 'repo')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches?page=1&pagelen=10')
+      expect(options.method).to.equal('GET')
+    })
+
+    it('passes explicit page and pagelen through', async () => {
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
+
+      await api.listBranches('ws', 'repo', {page: 3, pagelen: 25})
+
+      const [url] = fetchStub.firstCall.args
+      const params = new URL(url).searchParams
+      expect(params.get('page')).to.equal('3')
+      expect(params.get('pagelen')).to.equal('25')
+    })
+
+    it('includes q when provided', async () => {
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
+
+      await api.listBranches('ws', 'repo', {q: 'name ~ "feature/x"'})
+
+      const [url] = fetchStub.firstCall.args
+      const params = new URL(url).searchParams
+      expect(params.get('q')).to.equal('name ~ "feature/x"')
+      expect(params.get('sort')).to.be.null
+    })
+
+    it('includes sort when provided', async () => {
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
+
+      await api.listBranches('ws', 'repo', {sort: '-name'})
+
+      const [url] = fetchStub.firstCall.args
+      const params = new URL(url).searchParams
+      expect(params.get('sort')).to.equal('-name')
+      expect(params.get('q')).to.be.null
+    })
+
+    it('includes q and sort together', async () => {
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
+
+      await api.listBranches('ws', 'repo', {page: 2, pagelen: 5, q: 'name ~ "e2e"', sort: 'name'})
+
+      const [url] = fetchStub.firstCall.args
+      const params = new URL(url).searchParams
+      expect(params.get('page')).to.equal('2')
+      expect(params.get('pagelen')).to.equal('5')
+      expect(params.get('q')).to.equal('name ~ "e2e"')
+      expect(params.get('sort')).to.equal('name')
+    })
+
+    it('returns the collection page unchanged, pagination metadata included', async () => {
+      const page = {next: 'https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches?page=2', page: 1, pagelen: 10, values: [{name: 'main'}]}
+      fetchStub.resolves(Response.json(page, {status: 200}))
+
+      const result = await api.listBranches('ws', 'repo')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal(page)
+    })
+
+    it('reports failure without throwing on an HTTP error', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'Repository not found'}}, {status: 404}))
+
+      const result = await api.listBranches('ws', 'repo')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal({error: {message: 'Repository not found'}})
+    })
+
+    it('reports network failures as failed results', async () => {
+      fetchStub.rejects(new Error('Network timeout'))
+
+      const result = await api.listBranches('ws', 'repo')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Network timeout')
+    })
+  })
+
+  describe('createBranch', () => {
+    it('calls POST /repositories/:workspace/:repoSlug/refs/branches', async () => {
+      fetchStub.resolves(Response.json({name: 'feature/x'}, {status: 201}))
+
+      await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/refs/branches')
+      expect(options.method).to.equal('POST')
+    })
+
+    it('sends a JSON content type', async () => {
+      fetchStub.resolves(Response.json({name: 'feature/x'}, {status: 201}))
+
+      await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+
+      const [, options] = fetchStub.firstCall.args
+      expect(options.headers['Content-Type']).to.equal('application/json')
+    })
+
+    it('sends the exact name/target body', async () => {
+      fetchStub.resolves(Response.json({name: 'feature/x'}, {status: 201}))
+
+      await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+
+      const [, options] = fetchStub.firstCall.args
+      expect(JSON.parse(options.body)).to.deep.equal({name: 'feature/x', target: {hash: 'abc123'}})
+    })
+
+    it('keeps a slash-containing branch name literal in the JSON body', async () => {
+      fetchStub.resolves(Response.json({name: 'feature/x'}, {status: 201}))
+
+      await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+
+      const [, options] = fetchStub.firstCall.args
+      expect(options.body).to.equal('{"name":"feature/x","target":{"hash":"abc123"}}')
+      expect(options.body).to.not.include('%2F')
+    })
+
+    it('succeeds on both 200 and 201 responses', async () => {
+      fetchStub.resolves(Response.json({name: 'feature/x'}, {status: 200}))
+      const updated = await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+      expect(updated.success).to.be.true
+
+      fetchStub.resetHistory()
+      fetchStub.resolves(Response.json({name: 'feature/x'}, {status: 201}))
+      const created = await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+      expect(created.success).to.be.true
+    })
+
+    it('reports rejection without throwing', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'You are not permitted'}}, {status: 403}))
+
+      const result = await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal({error: {message: 'You are not permitted'}})
+    })
+
+    it('reports network failures as failed results', async () => {
+      fetchStub.rejects(new Error('Network timeout'))
+
+      const result = await api.createBranch('ws', 'repo', {name: 'feature/x', targetHash: 'abc123'})
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Network timeout')
+    })
+  })
+
   describe('triggerPipeline', () => {
     it('calls POST /repositories/:workspace/:repoSlug/pipelines/', async () => {
       fetchStub.resolves(Response.json({uuid: '{new}'}, {status: 201}))

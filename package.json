@@ -64,6 +64,9 @@
       "bb": {
         "description": "Commands for managing Bitbucket workflows and operations"
       },
+      "bb:branch": {
+        "description": "Get, list, or create branches"
+      },
       "bb:pipeline": {
         "description": "List, get, or trigger pipelines"
       },
