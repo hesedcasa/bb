@@ -28,6 +28,23 @@ export class BitbucketApi {
   }
 
   /**
+   * Create a branch
+   *
+   * Uses the JSON refs endpoint (not the multipart /src upload): the body is
+   * `{name, target: {hash}}`, with the target commit resolved by the caller.
+   */
+  async createBranch(
+    workspace: string,
+    repoSlug: string,
+    options: {name: string; targetHash: string},
+  ): Promise<ApiResult> {
+    return this.request(`/repositories/${workspace}/${repoSlug}/refs/branches`, {
+      body: JSON.stringify({name: options.name, target: {hash: options.targetHash}}),
+      method: 'POST',
+    })
+  }
+
+  /**
    * Create a pull request
    */
   // eslint-disable-next-line max-params
@@ -162,6 +179,16 @@ export class BitbucketApi {
   }
 
   /**
+   * Get a branch
+   *
+   * `branch` is the raw branch name; it is URL-encoded exactly once here, so
+   * names containing `/`, spaces, `#` or `?` reach the API intact.
+   */
+  async getBranch(workspace: string, repoSlug: string, branch: string): Promise<ApiResult> {
+    return this.request(`/repositories/${workspace}/${repoSlug}/refs/branches/${encodeURIComponent(branch)}`)
+  }
+
+  /**
    * Get a specific commit
    *
    * Uses the singular /commit/{sha} endpoint, which resolves commits that are no longer reachable
@@ -230,6 +257,29 @@ export class BitbucketApi {
    */
   async getWorkspace(workspace: string): Promise<ApiResult> {
     return this.request(`/workspaces/${workspace}`)
+  }
+
+  /**
+   * List a repository's branches
+   *
+   * Returns a single page of the collection, pagination metadata included.
+   * `q` and `sort` are Bitbucket's own query-string expressions and are passed
+   * through without interpretation.
+   */
+  async listBranches(
+    workspace: string,
+    repoSlug: string,
+    options: {page?: number; pagelen?: number; q?: string; sort?: string} = {},
+  ): Promise<ApiResult> {
+    const params = new URLSearchParams({
+      page: String(options.page ?? 1),
+      pagelen: String(options.pagelen ?? 10),
+    })
+
+    if (options.q) params.set('q', options.q)
+    if (options.sort) params.set('sort', options.sort)
+
+    return this.request(`/repositories/${workspace}/${repoSlug}/refs/branches?${params.toString()}`)
   }
 
   /**

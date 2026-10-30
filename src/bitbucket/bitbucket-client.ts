@@ -49,6 +49,36 @@ export async function getCommit(
   return bb.getCommit(workspace, repoSlug, commitSha)
 }
 
+export async function getBranch(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  branch: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.getBranch(workspace, repoSlug, branch)
+}
+
+export async function listBranches(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  options: {page?: number; pagelen?: number; q?: string; sort?: string} = {},
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.listBranches(workspace, repoSlug, options)
+}
+
+export async function createBranch(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  options: {name: string; targetHash: string},
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.createBranch(workspace, repoSlug, options)
+}
+
 // eslint-disable-next-line max-params
 export async function listCommits(
   config: AuthConfig,

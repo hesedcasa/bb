@@ -222,12 +222,13 @@ export async function seedBranch(slug: string, fromSha: string, name: string): P
  * Reads a ref's HTTP status straight from the REST API.
  *
  * @param slug The repository slug.
- * @param name The branch name.
+ * @param name The branch name (raw; encoded here once, so slash-containing
+ *   names work as an independent oracle).
  * @returns The status code: 200 while the branch exists, 404 once deleted.
  */
 export async function refHttpStatus(slug: string, name: string): Promise<number> {
   const {workspace} = requireEnv()
-  const {status} = await call('GET', `/repositories/${workspace}/${slug}/refs/branches/${name}`)
+  const {status} = await call('GET', `/repositories/${workspace}/${slug}/refs/branches/${encodeURIComponent(name)}`)
   return status
 }
 

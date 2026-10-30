@@ -26,7 +26,7 @@ $ npm install -g @hesed/bb
 $ bb COMMAND
 running command...
 $ bb (--version)
-@hesed/bb/0.13.0 linux-x64 node-v22.23.3
+@hesed/bb/0.13.0 linux-x64 node-v24.20.0
 $ bb --help [COMMAND]
 USAGE
   $ bb COMMAND
@@ -43,6 +43,9 @@ USAGE
 * [`bb bb auth profile`](#bb-bb-auth-profile)
 * [`bb bb auth test`](#bb-bb-auth-test)
 * [`bb bb auth update`](#bb-bb-auth-update)
+* [`bb bb branch WORKSPACE REPOSLUG BRANCH`](#bb-bb-branch-workspace-reposlug-branch)
+* [`bb bb branch create WORKSPACE REPOSLUG`](#bb-bb-branch-create-workspace-reposlug)
+* [`bb bb branch list WORKSPACE REPOSLUG`](#bb-bb-branch-list-workspace-reposlug)
 * [`bb bb commit WORKSPACE REPOSLUG COMMITSHA`](#bb-bb-commit-workspace-reposlug-commitsha)
 * [`bb bb commit list WORKSPACE REPOSLUG`](#bb-bb-commit-list-workspace-reposlug)
 * [`bb bb pipeline WORKSPACE REPOSLUG`](#bb-bb-pipeline-workspace-reposlug)
@@ -222,6 +225,100 @@ EXAMPLES
 ```
 
 _See code: [src/commands/bb/auth/update.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/auth/update.ts)_
+
+## `bb bb branch WORKSPACE REPOSLUG BRANCH`
+
+Get details of a specific branch
+
+```
+USAGE
+  $ bb bb branch WORKSPACE REPOSLUG BRANCH [-p <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE  Workspace slug or UUID
+  REPOSLUG   Repository slug
+  BRANCH     Branch name
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+      --toon             Format output as toon
+
+DESCRIPTION
+  Get details of a specific branch
+
+EXAMPLES
+  $ bb bb branch my-workspace my-repo main
+
+  $ bb bb branch my-workspace my-repo feature/x
+```
+
+_See code: [src/commands/bb/branch/index.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/branch/index.ts)_
+
+## `bb bb branch create WORKSPACE REPOSLUG`
+
+Create a new branch, from a commit hash, another branch, or the repository's default branch by default
+
+```
+USAGE
+  $ bb bb branch create WORKSPACE REPOSLUG --name <value> [-p <value>] [--target <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE  Workspace slug or UUID
+  REPOSLUG   Repository slug
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+      --name=<value>     (required) New branch name
+      --target=<value>   Commit hash or branch name to branch from; hexadecimal strings up to 40 characters are resolved
+                         as commits (defaults to the repository's default branch)
+      --toon             Format output as toon
+
+DESCRIPTION
+  Create a new branch, from a commit hash, another branch, or the repository's default branch by default
+
+EXAMPLES
+  $ bb bb branch create my-workspace my-repo --name feature/x
+
+  $ bb bb branch create my-workspace my-repo --name feature/y --target feature/x
+
+  $ bb bb branch create my-workspace my-repo --name feature/z --target a1b2c3d4 -p work
+```
+
+_See code: [src/commands/bb/branch/create.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/branch/create.ts)_
+
+## `bb bb branch list WORKSPACE REPOSLUG`
+
+List a repository's branches
+
+```
+USAGE
+  $ bb bb branch list WORKSPACE REPOSLUG [--page <value>] [--pagelen <value>] [-p <value>] [--q <value>] [--sort
+    <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE  Workspace slug or UUID
+  REPOSLUG   Repository slug
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+      --page=<value>     [default: 1] Page number
+      --pagelen=<value>  [default: 10] Number of items per page
+      --q=<value>        Bitbucket query string to filter branches, e.g. name ~ "feature/x"
+      --sort=<value>     Field to sort by, e.g. name (prefix with - to reverse)
+      --toon             Format output as toon
+
+DESCRIPTION
+  List a repository's branches
+
+EXAMPLES
+  $ bb bb branch list my-workspace my-repo
+
+  $ bb bb branch list my-workspace my-repo --pagelen 25 --page 2
+
+  $ bb bb branch list my-workspace my-repo --sort name --q 'name ~ "feature/x"'
+```
+
+_See code: [src/commands/bb/branch/list.ts](https://github.com/hesedcasa/bb/blob/v0.13.0/src/commands/bb/branch/list.ts)_
 
 ## `bb bb commit WORKSPACE REPOSLUG COMMITSHA`
 
