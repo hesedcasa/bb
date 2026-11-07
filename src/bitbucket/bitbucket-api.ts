@@ -5,9 +5,9 @@ import {type ApiResult, type AuthConfig, buildAuthHeader} from '@hesed/plugin-li
  * Provides core Bitbucket REST API operations
  */
 export class BitbucketApi {
-  private readonly config: AuthConfig
+  private readonly config: AuthConfig | undefined
 
-  constructor(config: AuthConfig) {
+  constructor(config?: AuthConfig) {
     this.config = config
   }
 
@@ -247,9 +247,15 @@ export class BitbucketApi {
 
   /**
    * Get repository details
+   *
+   * The only endpoint that supports anonymous (unauthenticated) access: when
+   * the client was constructed without credentials the Authorization header is
+   * omitted entirely, which is what makes the profile-less `repo clone`
+   * fallback possible for publicly discoverable repositories.
    */
   async getRepository(workspace: string, repoSlug: string): Promise<ApiResult> {
-    return this.request(`/repositories/${workspace}/${repoSlug}`)
+    const path = `/repositories/${this.toPathSegment(workspace)}/${this.toPathSegment(repoSlug)}`
+    return this.request(path, {authenticated: this.config !== undefined})
   }
 
   /**
@@ -610,8 +616,17 @@ export class BitbucketApi {
 
   /**
    * Build authorization header
+   *
+   * Guarded so a credential-less client fails an operation instead of silently
+   * degrading it to an anonymous request. Anonymous access is granted
+   * per-endpoint (getRepository only) through the `authenticated` request
+   * switch, never by omitting credentials here.
    */
   private getAuthHeader(): string {
+    if (!this.config) {
+      throw new Error('Bitbucket API credentials are required for this operation')
+    }
+
     return buildAuthHeader(this.config)
   }
 
@@ -624,14 +639,35 @@ export class BitbucketApi {
   }
 
   /**
-   * Make an authenticated request to the Bitbucket API
+   * Encode a single path component for a lookup URL
+   *
+   * Ordinary slugs, UUIDs and pre-encoded values pass through untouched; only
+   * structure-breaking characters (`/`, `?`, `#`) are escaped, which rules out
+   * path traversal and query/fragment injection for hostile inputs.
    */
-  private async request(path: string, options?: {body?: string; method?: string}): Promise<ApiResult> {
+  private toPathSegment(value: string): string {
+    const requiresEncoding = value.includes('/') || value.includes('?') || value.includes('#')
+    return requiresEncoding ? encodeURIComponent(value) : value
+  }
+
+  /**
+   * Make an authenticated request to the Bitbucket API
+   *
+   * `authenticated: false` is the explicit anonymous switch; it defaults to
+   * true so every caller but getRepository keeps its authenticated behavior.
+   */
+  private async request(
+    path: string,
+    options?: {authenticated?: boolean; body?: string; method?: string},
+  ): Promise<ApiResult> {
     try {
       const url = `${this.getBaseUrl()}${path}`
       const headers: Record<string, string> = {
         Accept: 'application/json',
-        Authorization: this.getAuthHeader(),
+      }
+
+      if (options?.authenticated !== false) {
+        headers.Authorization = this.getAuthHeader()
       }
 
       if (options?.body) {

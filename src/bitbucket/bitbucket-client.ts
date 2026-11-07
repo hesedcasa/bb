@@ -34,9 +34,30 @@ export async function listRepositories(
   return bb.listRepositories(workspace, page, pagelen, role, q)
 }
 
-export async function getRepository(config: AuthConfig, workspace: string, repoSlug: string): Promise<ApiResult> {
-  const bb = await getClient(config)
+/**
+ * Get repository details
+ *
+ * `config` may be undefined for anonymous lookup (used by the profile-less
+ * `repo clone` fallback). The anonymous client is instantiated directly so it
+ * never touches the profile-client cache — an undefined config must not evict
+ * or reuse the cached authenticated client.
+ */
+export async function getRepository(config: AuthConfig | undefined, workspace: string, repoSlug: string): Promise<ApiResult> {
+  const bb = config ? await getClient(config) : new BitbucketApi()
   return bb.getRepository(workspace, repoSlug)
+}
+
+/**
+ * Get the authenticated user
+ *
+ * Used by `repo clone` to resolve the Bitbucket account name for git
+ * authentication: the git endpoint rejects the profile email as username,
+ * while the API accepts it, so the account name is resolved with this
+ * endpoint (which works with email + API token) before cloning.
+ */
+export async function getCurrentUser(config: AuthConfig): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.getCurrentUser()
 }
 
 export async function getCommit(
