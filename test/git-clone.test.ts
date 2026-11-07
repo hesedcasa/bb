@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, unicorn/prefer-https */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {expect} from 'chai'
 import esmock from 'esmock'
 import {Buffer} from 'node:buffer'
@@ -10,8 +10,10 @@ import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {type SinonStub, stub} from 'sinon'
 
-const tick = (): Promise<void> => new Promise((resolve) => setImmediate(resolve))
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 
 /**
  * Wait until a condition holds, yielding to the event loop with real time
@@ -19,6 +21,7 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
  */
 const until = async (condition: () => boolean, tries = 400): Promise<void> => {
   for (let i = 0; i < tries && !condition(); i++) {
+    // eslint-disable-next-line no-await-in-loop -- deliberate poll with real time slices
     await sleep(5)
   }
 }
@@ -28,8 +31,10 @@ const until = async (condition: () => boolean, tries = 400): Promise<void> => {
  * understand setEncoding, mirroring what runGit wires up.
  */
 function makeFakeChild(children: any[]): any {
+  // eslint-disable-next-line unicorn/prefer-event-target -- a real child process is an EventEmitter
   const child: any = new EventEmitter()
   const stream = (): any => {
+    // eslint-disable-next-line unicorn/prefer-event-target -- a real pipe stream is an EventEmitter
     const emitter: any = new EventEmitter()
     emitter.setEncoding = stub()
     return emitter
@@ -221,7 +226,9 @@ describe('git-clone', () => {
   describe('createRedactingStream', () => {
     it('redacts secrets and passes plain text through', () => {
       const chunks: string[] = []
-      const stream = createRedactingStream([credentials.password], (chunk: string) => chunks.push(chunk))
+      const stream = createRedactingStream([credentials.password], (chunk: string) => {
+        chunks.push(chunk)
+      })
 
       stream.write(`Cloning into ${credentials.password}\n`)
       stream.end()
@@ -233,7 +240,9 @@ describe('git-clone', () => {
 
     it('catches a secret split across chunk boundaries', () => {
       const chunks: string[] = []
-      const stream = createRedactingStream([credentials.password], (chunk: string) => chunks.push(chunk))
+      const stream = createRedactingStream([credentials.password], (chunk: string) => {
+        chunks.push(chunk)
+      })
       const secret = credentials.password
 
       stream.write(`remote: token ${secret.slice(0, 8)}`)
@@ -248,7 +257,9 @@ describe('git-clone', () => {
     it('redacts every secret variant including split Basic-auth payloads', () => {
       const secrets = credentialSecrets(credentials)
       const chunks: string[] = []
-      const stream = createRedactingStream(secrets, (chunk: string) => chunks.push(chunk))
+      const stream = createRedactingStream(secrets, (chunk: string) => {
+        chunks.push(chunk)
+      })
       const basic = secrets[2]
 
       stream.write(basic.slice(0, 6))
@@ -265,7 +276,9 @@ describe('git-clone', () => {
 
     it('flushes a carried partial secret at end', () => {
       const chunks: string[] = []
-      const stream = createRedactingStream([credentials.password], (chunk: string) => chunks.push(chunk))
+      const stream = createRedactingStream([credentials.password], (chunk: string) => {
+        chunks.push(chunk)
+      })
 
       stream.write(credentials.password)
       stream.end()
@@ -276,7 +289,9 @@ describe('git-clone', () => {
 
     it('handles empty secret lists as a passthrough', () => {
       const chunks: string[] = []
-      const stream = createRedactingStream([], (chunk: string) => chunks.push(chunk))
+      const stream = createRedactingStream([], (chunk: string) => {
+        chunks.push(chunk)
+      })
 
       stream.write('plain\n')
       stream.end()
@@ -293,7 +308,7 @@ describe('git-clone', () => {
     }
 
     it('checks the git version before cloning', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       expect(spawnStub.firstCall.args[1]).to.deep.equal(['--version'])
       emitVersion('git version 2.39.5\n')
@@ -302,11 +317,11 @@ describe('git-clone', () => {
       await promise
 
       expect(spawnStub.callCount).to.equal(2)
-      expect(spawnStub.secondCall.args[1]).to.deep.equal(['clone', '--', url, '/tmp/dest'])
+      expect(spawnStub.secondCall.args[1]).to.deep.equal(['clone', '--', url, path.resolve('/tmp/dest')])
     })
 
     it('rejects with a fixed message when git is too old and never clones', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.28.1 (Apple Git-125)\n')
 
@@ -330,7 +345,7 @@ describe('git-clone', () => {
       })
 
       try {
-        await cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+        await cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
         expect.fail('should have thrown')
       } catch (error: unknown) {
         expect((error as Error).message).to.equal(
@@ -342,7 +357,7 @@ describe('git-clone', () => {
     })
 
     it('rejects when the version output cannot be parsed', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('some-other-tool 1.0\n')
 
@@ -355,7 +370,7 @@ describe('git-clone', () => {
     })
 
     it('spawns the clone with shell disabled from a temporary directory inside the OS temp dir', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -369,23 +384,18 @@ describe('git-clone', () => {
     })
 
     it('passes an absolute destination even when given a relative one', async () => {
-      const promise = cloneRepository({url, destination: 'sub/dir', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: 'sub/dir', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
       children[1].emit('close', 0, null)
       await promise
 
-      expect(spawnStub.secondCall.args[1]).to.deep.equal([
-        'clone',
-        '--',
-        url,
-        path.resolve(process.cwd(), 'sub/dir'),
-      ])
+      expect(spawnStub.secondCall.args[1]).to.deep.equal(['clone', '--', url, path.resolve(process.cwd(), 'sub/dir')])
     })
 
     it('delivers credentials through the child environment only, never argv', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -395,11 +405,9 @@ describe('git-clone', () => {
       const argv = JSON.stringify(spawnStub.secondCall.args.slice(0, 2))
       expect(argv).to.not.include(credentials.password)
       expect(argv).to.not.include(encodeURIComponent(credentials.password))
-      expect(argv).to.not.include(
-        Buffer.from(`${credentials.username}:${credentials.password}`).toString('base64'),
-      )
+      expect(argv).to.not.include(Buffer.from(`${credentials.username}:${credentials.password}`).toString('base64'))
 
-      const env = spawnStub.secondCall.args[2].env
+      const {env} = spawnStub.secondCall.args[2]
       expect(env.BB_GIT_PASSWORD).to.equal(credentials.password)
       expect(env.GIT_CONFIG_VALUE_0).to.equal('')
       expect(env.GIT_CONFIG_VALUE_1).to.not.include(credentials.password)
@@ -407,7 +415,14 @@ describe('git-clone', () => {
 
     it('redacts secret-bearing child output, including split chunks', async () => {
       const chunks: string[] = []
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: (c: string) => chunks.push(c)})
+      const promise = cloneRepository({
+        credentials,
+        destination: '/tmp/dest',
+        url,
+        write(c: string) {
+          chunks.push(c)
+        },
+      })
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -432,7 +447,7 @@ describe('git-clone', () => {
     })
 
     it('reports signal termination', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -447,7 +462,7 @@ describe('git-clone', () => {
     })
 
     it('settles once when an emitted error is followed by a trailing close', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -465,7 +480,7 @@ describe('git-clone', () => {
     })
 
     it('reports a non-zero close even when an error event fires afterwards', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -481,7 +496,7 @@ describe('git-clone', () => {
     })
 
     it('removes the temporary working directory on clone failure', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -499,7 +514,7 @@ describe('git-clone', () => {
 
     it('leaves the parent environment unchanged', async () => {
       const before = {...process.env}
-      const promise = cloneRepository({url, destination: '/tmp/dest', credentials, write: () => {}})
+      const promise = cloneRepository({credentials, destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       emitVersion('git version 2.39.5\n')
       await until(() => spawnStub.callCount === 2)
@@ -513,13 +528,13 @@ describe('git-clone', () => {
   describe('cloneRepository (plain https / ssh)', () => {
     it('invokes git exactly once with no version check and no credential injection', async () => {
       const sshUrl = 'git@bitbucket.org:ws/repo.git'
-      const promise = cloneRepository({url: sshUrl, destination: '/tmp/dest', write: () => {}})
+      const promise = cloneRepository({destination: '/tmp/dest', url: sshUrl, write() {}})
       await until(() => spawnStub.callCount === 1)
       expect(spawnStub.callCount).to.equal(1)
       children[0].emit('close', 0, null)
       await promise
 
-      expect(spawnStub.firstCall.args[1]).to.deep.equal(['clone', '--', sshUrl, '/tmp/dest'])
+      expect(spawnStub.firstCall.args[1]).to.deep.equal(['clone', '--', sshUrl, path.resolve('/tmp/dest')])
       const spawnOptions = spawnStub.firstCall.args[2]
       expect(spawnOptions.shell).to.equal(false)
       // Ordinary git behavior: inherit the caller's environment and cwd.
@@ -528,7 +543,7 @@ describe('git-clone', () => {
     })
 
     it('rejects with the ENOENT message when git is missing', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', write: () => {}})
+      const promise = cloneRepository({destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       children[0].emit('error', Object.assign(new Error('spawn git ENOENT'), {code: 'ENOENT'}))
       children[0].emit('close', null, null)
@@ -544,7 +559,7 @@ describe('git-clone', () => {
     })
 
     it('rejects on non-zero exit', async () => {
-      const promise = cloneRepository({url, destination: '/tmp/dest', write: () => {}})
+      const promise = cloneRepository({destination: '/tmp/dest', url, write() {}})
       await until(() => spawnStub.callCount === 1)
       children[0].emit('close', 1, null)
 
@@ -565,12 +580,11 @@ describe('git-clone', () => {
       }
     })
 
-    const runHelper = (helper: string, stdin: string): ReturnType<typeof spawnSync> => {
-      return spawnSync('sh', ['-c', helper], {
+    const runHelper = (helper: string, stdin: string): ReturnType<typeof spawnSync> =>
+      spawnSync('sh', ['-c', helper], {
         env: {...process.env, BB_GIT_PASSWORD: credentials.password, BB_GIT_USERNAME: credentials.username},
         input: stdin,
       })
-    }
 
     it('answers get with the child-env credentials (old git: operation as argument)', () => {
       const helper = buildCredentialHelper('bitbucket.org')
@@ -580,9 +594,7 @@ describe('git-clone', () => {
       })
 
       expect(result.status).to.equal(0)
-      expect(result.stdout.toString()).to.equal(
-        `username=${credentials.username}\npassword=${credentials.password}\n`,
-      )
+      expect(result.stdout.toString()).to.equal(`username=${credentials.username}\npassword=${credentials.password}\n`)
     })
 
     it('answers get with the child-env credentials (git >= 2.36: operation appended to script)', () => {
@@ -590,9 +602,7 @@ describe('git-clone', () => {
       const result = runHelper(`${helper} get`, 'protocol=https\nhost=bitbucket.org\n\n')
 
       expect(result.status).to.equal(0)
-      expect(result.stdout.toString()).to.equal(
-        `username=${credentials.username}\npassword=${credentials.password}\n`,
-      )
+      expect(result.stdout.toString()).to.equal(`username=${credentials.username}\npassword=${credentials.password}\n`)
     })
 
     it('offers nothing for a different host', () => {
@@ -615,7 +625,7 @@ describe('git-clone', () => {
   describe('local real-git regression', function () {
     // Real git against temporary local repositories: no network, no
     // credentials. Uses the real module (real spawn), not the esmock'd one.
-    this.timeout(30000)
+    this.timeout(30_000)
 
     let originDir: string
     let workDir: string
@@ -633,10 +643,10 @@ describe('git-clone', () => {
         const result = spawnSync('git', args, {
           cwd,
           env: {
-            GIT_AUTHOR_NAME: 'test',
             GIT_AUTHOR_EMAIL: 'test@example.com',
-            GIT_COMMITTER_NAME: 'test',
+            GIT_AUTHOR_NAME: 'test',
             GIT_COMMITTER_EMAIL: 'test@example.com',
+            GIT_COMMITTER_NAME: 'test',
             HOME: process.env.HOME,
             PATH: process.env.PATH,
           },
@@ -659,7 +669,7 @@ describe('git-clone', () => {
 
     it('clones a real local repository into the requested destination with a clean origin', async () => {
       const destination = path.join(workDir, 'my dest')
-      await realCloneRepository({url: originDir, destination, write: () => {}})
+      await realCloneRepository({destination, url: originDir, write() {}})
 
       expect(existsSync(path.join(destination, 'README.md'))).to.be.true
 
@@ -673,7 +683,7 @@ describe('git-clone', () => {
       // Destination starting with `-` must survive as a single operand; git
       // resolves it relative to the absolute path we hand it.
       const destination = path.join(workDir, '-dash-dir')
-      await realCloneRepository({url: originDir, destination, write: () => {}})
+      await realCloneRepository({destination, url: originDir, write() {}})
 
       expect(existsSync(path.join(destination, '.git'))).to.be.true
     })
@@ -684,7 +694,7 @@ describe('git-clone', () => {
       spawnSync('git', ['-C', destination, 'commit', '--allow-empty', '-m', 'x'])
 
       try {
-        await realCloneRepository({url: originDir, destination, write: () => {}})
+        await realCloneRepository({destination, url: originDir, write() {}})
         expect.fail('should have thrown')
       } catch (error: unknown) {
         expect((error as Error).message).to.match(/git clone failed with exit code/)

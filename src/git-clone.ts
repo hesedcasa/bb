@@ -32,7 +32,7 @@ import path from 'node:path'
 /** Minimum Git version supporting the GIT_CONFIG_* env config mechanism. */
 export const MINIMUM_GIT_VERSION = {major: 2, minor: 31, patch: 0}
 
-export interface GitCloneCredentials {
+export type GitCloneCredentials = {
   /** HTTPS host the credentials are restricted to (e.g. `bitbucket.org`). */
   host: string
   /** Resolved API token (app password) used as the Git HTTP password. */
@@ -41,13 +41,13 @@ export interface GitCloneCredentials {
   username: string
 }
 
-export interface CloneRepositoryOptions {
-  /** Clone URL taken from the API's `links.clone` — never credentials in it. */
-  url: string
-  /** Absolute destination directory for the clone. */
-  destination: string
+export type CloneRepositoryOptions = {
   /** Presence selects authenticated (isolated) mode; absence clones plainly. */
   credentials?: GitCloneCredentials
+  /** Absolute destination directory for the clone. */
+  destination: string
+  /** Clone URL taken from the API's `links.clone` — never credentials in it. */
+  url: string
   /**
    * Output sink for streamed child output (defaults to process.stderr).
    * Everything is passed through a bounded streaming redactor either way.
@@ -129,8 +129,8 @@ export function buildCredentialHelper(host: string): string {
     'h=',
     'while IFS= read -r l; do [ "$l" = "host=' + host + '" ] && h=1; done',
     'test -n "$h" || exit 0',
-    'printf "username=%s\\n" "$BB_GIT_USERNAME"',
-    'printf "password=%s\\n" "$BB_GIT_PASSWORD"',
+    String.raw`printf "username=%s\n" "$BB_GIT_USERNAME"`,
+    String.raw`printf "password=%s\n" "$BB_GIT_PASSWORD"`,
     ':',
   ].join('; ')
 }
@@ -205,9 +205,8 @@ export function createRedactingStream(
   secrets: string[],
   write: (chunk: string) => void,
 ): {end: () => void; write: (chunk: string) => void} {
-  const present = [...new Set(secrets.filter((secret) => secret.length > 0))].sort(
-    (a, b) => b.length - a.length,
-  )
+  const present = [...new Set(secrets.filter((secret) => secret.length > 0))]
+  present.sort((a, b) => b.length - a.length)
   const keep = present.length > 0 ? present[0].length - 1 : 0
   let carry = ''
 
@@ -221,6 +220,14 @@ export function createRedactingStream(
   }
 
   return {
+    end(): void {
+      if (carry.length === 0) {
+        return
+      }
+
+      write(redact(carry))
+      carry = ''
+    },
     write(chunk: string): void {
       const redacted = redact(carry + chunk)
       if (keep === 0) {
@@ -236,19 +243,11 @@ export function createRedactingStream(
         carry = redacted
       }
     },
-    end(): void {
-      if (carry.length > 0) {
-        write(redact(carry))
-        carry = ''
-      }
-    },
   }
 }
 
 /** Parse `git version X.Y.Z <distro suffix>` output; undefined when unparseable. */
-export function parseGitVersion(
-  output: string,
-): {major: number; minor: number; patch: number} | undefined {
+export function parseGitVersion(output: string): undefined | {major: number; minor: number; patch: number} {
   const match = /^git version (\d+)\.(\d+)(?:\.(\d+))?/.exec(output.trim())
   if (!match) {
     return undefined
@@ -273,8 +272,8 @@ export function isGitVersionAtLeast(
   return version.patch >= minimum.patch
 }
 
-interface GitSpawnResult {
-  code: number | null
+type GitSpawnResult = {
+  code: null | number
   signal: NodeJS.Signals | null
   spawnError?: NodeJS.ErrnoException
   stdout?: string
@@ -288,7 +287,7 @@ interface GitSpawnResult {
  * terminations each settle the promise exactly once; nothing serializes the
  * spawn options or the raw error object.
  */
-function runGit(
+async function runGit(
   argv: string[],
   options: {
     collectStdout?: boolean
@@ -316,15 +315,15 @@ function runGit(
     const redactor = createRedactingStream(options.secrets ?? [], sink)
 
     let stdoutText = ''
-    let settled = false
+    let isSettled = false
     let spawnError: NodeJS.ErrnoException | undefined
 
-    const settleWithClose = (code: number | null, signal: NodeJS.Signals | null): void => {
-      if (settled) {
+    const settleWithClose = (code: null | number, signal: NodeJS.Signals | null): void => {
+      if (isSettled) {
         return
       }
 
-      settled = true
+      isSettled = true
       resolve({
         code,
         signal,
@@ -334,11 +333,11 @@ function runGit(
     }
 
     const settleWithError = (error: NodeJS.ErrnoException): void => {
-      if (settled) {
+      if (isSettled) {
         return
       }
 
-      settled = true
+      isSettled = true
       redactor.end()
       resolve({code: null, signal: null, spawnError: error})
     }
@@ -391,9 +390,7 @@ export async function cloneRepository(options: CloneRepositoryOptions): Promise<
   if (options.credentials) {
     const versionResult = await runGit(['--version'], {collectStdout: true})
     if (versionResult.spawnError) {
-      throw new GitCloneError(
-        'Git executable not found. Install Git and make sure it is available on your PATH.',
-      )
+      throw new GitCloneError('Git executable not found. Install Git and make sure it is available on your PATH.')
     }
 
     const version = parseGitVersion(versionResult.stdout ?? '')
@@ -435,9 +432,7 @@ export async function cloneRepository(options: CloneRepositoryOptions): Promise<
 function throwForCloneResult(result: GitSpawnResult): void {
   if (result.spawnError) {
     if (result.spawnError.code === 'ENOENT') {
-      throw new GitCloneError(
-        'Git executable not found. Install Git and make sure it is available on your PATH.',
-      )
+      throw new GitCloneError('Git executable not found. Install Git and make sure it is available on your PATH.')
     }
 
     throw new GitCloneError('Failed to start git clone.')

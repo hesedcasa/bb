@@ -646,8 +646,8 @@ export class BitbucketApi {
    * path traversal and query/fragment injection for hostile inputs.
    */
   private toPathSegment(value: string): string {
-    const needsEncoding = value.includes('/') || value.includes('?') || value.includes('#')
-    return needsEncoding ? encodeURIComponent(value) : value
+    const requiresEncoding = value.includes('/') || value.includes('?') || value.includes('#')
+    return requiresEncoding ? encodeURIComponent(value) : value
   }
 
   /**

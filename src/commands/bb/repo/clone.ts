@@ -1,10 +1,11 @@
-import {type ApiResult, type AuthConfig, type Profiles, createProfileManager} from '@hesed/plugin-lib'
+import {type ApiResult, type AuthConfig, createProfileManager, type Profiles} from '@hesed/plugin-lib'
 import {Args, Flags} from '@oclif/core'
+import {Buffer} from 'node:buffer'
 import path from 'node:path'
 
 import {BaseCommand} from '../../../base-command.js'
 import {clearClients, getRepository} from '../../../bitbucket/bitbucket-client.js'
-import {type GitCloneCredentials, cloneRepository} from '../../../git-clone.js'
+import {cloneRepository, type GitCloneCredentials} from '../../../git-clone.js'
 
 type CloneProtocol = 'https' | 'ssh'
 
@@ -21,7 +22,7 @@ type MissingAuthState = 'absent' | 'missing-profile' | 'unusable'
 const PLUGIN_LIB_MISSING_PROFILES_MESSAGE = 'No authentication profiles found'
 
 async function classifyMissingAuth(
-  manager: {readProfiles: () => Promise<Profiles>; getDefaultProfile: () => Promise<string>},
+  manager: {getDefaultProfile: () => Promise<string>; readProfiles: () => Promise<Profiles>},
   selectedProfile: string | undefined,
 ): Promise<MissingAuthState> {
   let profiles: Profiles
@@ -30,9 +31,7 @@ async function classifyMissingAuth(
   } catch (error: unknown) {
     // ENOENT is reported by plugin-lib with this fixed message; anything else
     // means the config file exists but cannot be parsed.
-    return error instanceof Error && error.message === PLUGIN_LIB_MISSING_PROFILES_MESSAGE
-      ? 'absent'
-      : 'unusable'
+    return error instanceof Error && error.message === PLUGIN_LIB_MISSING_PROFILES_MESSAGE ? 'absent' : 'unusable'
   }
 
   let name: string
@@ -56,13 +55,13 @@ async function classifyMissingAuth(
  * syntax, or option-like strings.
  */
 function extractCloneHref(data: unknown, protocol: CloneProtocol): string {
-  const cloneLinks = (data as {links?: {clone?: unknown}} | null | undefined)?.links?.clone
+  const cloneLinks = (data as null | undefined | {links?: {clone?: unknown}})?.links?.clone
   if (!Array.isArray(cloneLinks)) {
-    throw new Error('Repository lookup returned no clone links.')
+    throw new TypeError('Repository lookup returned no clone links.')
   }
 
-  const entry = cloneLinks.find((link) => (link as {name?: unknown} | null)?.name === protocol)
-  const href = (entry as {href?: unknown} | undefined)?.href
+  const entry = cloneLinks.find((link) => (link as null | {name?: unknown})?.name === protocol)
+  const href = (entry as undefined | {href?: unknown})?.href
   if (typeof href !== 'string' || href.trim() === '') {
     throw new Error(`Repository lookup returned no ${protocol} clone URL.`)
   }
@@ -106,7 +105,7 @@ function validateHttpsHref(href: string): string {
     throw new Error('The repository https clone URL unexpectedly contains a query or fragment.')
   }
 
-  return parsed.toString()
+  return parsed.href
 }
 
 function validateSshHref(href: string): string {
@@ -122,7 +121,7 @@ function validateSshHref(href: string): string {
       throw new Error('The repository ssh clone URL must target the Bitbucket Cloud ssh host.')
     }
 
-    return parsed.toString()
+    return parsed.href
   }
 
   // scp-style syntax: user@host:path — everything else (local paths,
@@ -143,10 +142,14 @@ function sanitizeErrorMessage(error: unknown, auth: AuthConfig | undefined): str
   }
 
   const basic = Buffer.from(`${auth.email ?? ''}:${auth.apiToken}`).toString('base64')
-  return [auth.apiToken, encodeURIComponent(auth.apiToken), basic].reduce(
-    (redacted, secret) => (secret.length > 0 ? redacted.split(secret).join('[REDACTED]') : redacted),
-    message,
-  )
+  let redacted = message
+  for (const secret of [auth.apiToken, encodeURIComponent(auth.apiToken), basic]) {
+    if (secret.length > 0) {
+      redacted = redacted.split(secret).join('[REDACTED]')
+    }
+  }
+
+  return redacted
 }
 
 export default class RepoClone extends BaseCommand {
@@ -172,6 +175,7 @@ Uses the repository's API-declared clone URL and shells out to the local git bin
     '<%= config.bin %> <%= command.id %> my-workspace my-repo --protocol ssh',
     '<%= config.bin %> <%= command.id %> my-workspace my-repo -p work',
   ]
+
   static override flags = {
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     protocol: Flags.string({
@@ -204,7 +208,7 @@ Uses the repository's API-declared clone URL and shells out to the local git bin
     const {args, flags} = await this.parse(RepoClone)
     const protocol: CloneProtocol = flags.protocol === 'ssh' ? 'ssh' : 'https'
 
-    const {loadAuthConfig, readProfiles, getDefaultProfile} = createProfileManager(
+    const {getDefaultProfile, loadAuthConfig, readProfiles} = createProfileManager(
       this.config,
       flags.profile,
       'bb-config.json',
@@ -255,7 +259,7 @@ Uses the repository's API-declared clone URL and shells out to the local git bin
     }
 
     const destination = path.resolve(process.cwd(), args.destination ?? args.repoSlug)
-    await cloneRepository({url: cloneUrl, destination, credentials})
+    await cloneRepository({credentials, destination, url: cloneUrl})
     this.log(destination)
   }
 

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {expect} from 'chai'
 import esmock from 'esmock'
+import path from 'node:path'
 import {type SinonStub, stub} from 'sinon'
 
 describe('repo:clone', () => {
@@ -73,11 +74,11 @@ describe('repo:clone', () => {
     cloneRepositoryStub = stub().resolves()
 
     const imported = await esmock('../../../../src/commands/bb/repo/clone.js', {
-      '../../../../src/git-clone.js': {cloneRepository: cloneRepositoryStub},
       '../../../../src/bitbucket/bitbucket-client.js': {
         clearClients: clearClientsStub,
         getRepository: getRepositoryStub,
       },
+      '../../../../src/git-clone.js': {cloneRepository: cloneRepositoryStub},
       '@hesed/plugin-lib': {createProfileManager: createProfileManagerStub},
     })
     RepoClone = imported.default
@@ -87,16 +88,17 @@ describe('repo:clone', () => {
     const cmd = makeCommand(['ws', 'repo'])
     await cmd.run()
 
+    const destination = path.join(process.cwd(), 'repo')
     expect(createProfileManagerStub.calledWith(cmd.config, undefined, 'bb-config.json')).to.be.true
     expect(getRepositoryStub.calledOnceWith(mockAuth, 'ws', 'repo')).to.be.true
     expect(clearClientsStub.calledOnce).to.be.true
     expect(cloneRepositoryStub.calledOnce).to.be.true
     expect(cloneRepositoryStub.firstCall.args[0]).to.deep.equal({
       credentials: {host: 'bitbucket.org', password: 'test-token', username: 'test@example.com'},
-      destination: `${process.cwd()}/repo`,
+      destination,
       url: httpsHref,
     })
-    expect((cmd.log as SinonStub).calledOnceWith(`${process.cwd()}/repo`)).to.be.true
+    expect((cmd.log as SinonStub).calledOnceWith(destination)).to.be.true
     expect((cmd.logJson as SinonStub).called).to.be.false
   })
 
@@ -104,8 +106,9 @@ describe('repo:clone', () => {
     const cmd = makeCommand(['ws', 'repo', 'my-dir'])
     await cmd.run()
 
-    expect(cloneRepositoryStub.firstCall.args[0].destination).to.equal(`${process.cwd()}/my-dir`)
-    expect((cmd.log as SinonStub).calledOnceWith(`${process.cwd()}/my-dir`)).to.be.true
+    const destination = path.join(process.cwd(), 'my-dir')
+    expect(cloneRepositoryStub.firstCall.args[0].destination).to.equal(destination)
+    expect((cmd.log as SinonStub).calledOnceWith(destination)).to.be.true
   })
 
   it('selects the ssh href and performs no credential injection', async () => {
@@ -165,10 +168,11 @@ describe('repo:clone', () => {
     const cmd = makeCommand(['ws', 'repo'])
     await cmd.run()
 
+    const destination = path.join(process.cwd(), 'repo')
     expect((cmd.warn as SinonStub).calledOnce).to.be.true
     expect(getRepositoryStub.calledOnceWith(undefined, 'ws', 'repo')).to.be.true
     expect(cloneRepositoryStub.firstCall.args[0].credentials).to.be.undefined
-    expect((cmd.log as SinonStub).calledOnceWith(`${process.cwd()}/repo`)).to.be.true
+    expect((cmd.log as SinonStub).calledOnceWith(destination)).to.be.true
   })
 
   it('warns and clones anonymously when the config has no default profile entry', async () => {

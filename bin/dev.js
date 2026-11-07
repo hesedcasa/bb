@@ -5,12 +5,11 @@
 // executed directly (./bin/dev.js); when invoked as `node bin/dev.js` the
 // shebang is ignored, so re-exec once with the same flags.
 import {spawnSync} from 'node:child_process'
-import process from 'node:process'
 import {fileURLToPath} from 'node:url'
 
 if (
   !process.env.BB_DEV_REEXEC &&
-  !process.execArgv.some((arg) => arg.startsWith('--experimental-specifier-resolution'))
+  process.execArgv.every((arg) => !arg.startsWith('--experimental-specifier-resolution'))
 ) {
   const result = spawnSync(
     process.execPath,
