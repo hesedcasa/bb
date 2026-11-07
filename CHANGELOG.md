@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/hesedcasa/bb/compare/v0.14.0...v0.15.0) (2026-11-07)
+
+
+### 🎉 Features
+
+* **repo:** add clone command with profile-based git auth ([#185](https://github.com/hesedcasa/bb/issues/185)) ([071785d](https://github.com/hesedcasa/bb/commit/071785dd674dce77e11cccc7c5fd127f8c0ddd17))
+
 ## [0.14.0](https://github.com/hesedcasa/bb/compare/v0.13.0...v0.14.0) (2026-10-30)
 
 
