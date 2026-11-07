@@ -8,6 +8,7 @@ describe('repo:clone', () => {
   let RepoClone: any
   let createProfileManagerStub: SinonStub
   let getRepositoryStub: SinonStub
+  let getCurrentUserStub: SinonStub
   let clearClientsStub: SinonStub
   let cloneRepositoryStub: SinonStub
   let manager: {getDefaultProfile: SinonStub; loadAuthConfig: SinonStub; readProfiles: SinonStub}
@@ -70,12 +71,14 @@ describe('repo:clone', () => {
     }
     createProfileManagerStub = stub().returns(manager)
     getRepositoryStub = stub().resolves(mockResult([{href: httpsHref, name: 'https'}]))
+    getCurrentUserStub = stub().resolves({data: {username: 'bb-account'}, success: true})
     clearClientsStub = stub()
     cloneRepositoryStub = stub().resolves()
 
     const imported = await esmock('../../../../src/commands/bb/repo/clone.js', {
       '../../../../src/bitbucket/bitbucket-client.js': {
         clearClients: clearClientsStub,
+        getCurrentUser: getCurrentUserStub,
         getRepository: getRepositoryStub,
       },
       '../../../../src/git-clone.js': {cloneRepository: cloneRepositoryStub},
@@ -91,10 +94,11 @@ describe('repo:clone', () => {
     const destination = path.join(process.cwd(), 'repo')
     expect(createProfileManagerStub.calledWith(cmd.config, undefined, 'bb-config.json')).to.be.true
     expect(getRepositoryStub.calledOnceWith(mockAuth, 'ws', 'repo')).to.be.true
+    expect(getCurrentUserStub.calledOnceWith(mockAuth)).to.be.true
     expect(clearClientsStub.calledOnce).to.be.true
     expect(cloneRepositoryStub.calledOnce).to.be.true
     expect(cloneRepositoryStub.firstCall.args[0]).to.deep.equal({
-      credentials: {host: 'bitbucket.org', password: 'test-token', username: 'test@example.com'},
+      credentials: {host: 'bitbucket.org', password: 'test-token', username: 'bb-account'},
       destination,
       url: httpsHref,
     })
@@ -123,6 +127,7 @@ describe('repo:clone', () => {
     await cmd.run()
 
     expect(getRepositoryStub.calledOnceWith(mockAuth, 'ws', 'repo')).to.be.true
+    expect(getCurrentUserStub.called).to.be.false
     expect(cloneRepositoryStub.firstCall.args[0].url).to.equal(sshHref)
     expect(cloneRepositoryStub.firstCall.args[0].credentials).to.be.undefined
   })
@@ -134,7 +139,50 @@ describe('repo:clone', () => {
     await cmd.run()
 
     expect(createProfileManagerStub.calledWith(cmd.config, 'work', 'bb-config.json')).to.be.true
+    expect(getCurrentUserStub.called).to.be.false
     expect(cloneRepositoryStub.firstCall.args[0].credentials).to.be.undefined
+  })
+
+  it('hands git the Bitbucket account name resolved from the profile, not the email', async () => {
+    const cmd = makeCommand(['ws', 'repo'])
+    await cmd.run()
+
+    expect(getCurrentUserStub.calledOnceWith(mockAuth)).to.be.true
+    expect(cloneRepositoryStub.firstCall.args[0].credentials.username).to.equal('bb-account')
+  })
+
+  it('warns and falls back to the profile email when the account name cannot be resolved', async () => {
+    getCurrentUserStub.resolves({error: {message: 'forbidden'}, success: false})
+
+    const cmd = makeCommand(['ws', 'repo'])
+    await cmd.run()
+
+    expect((cmd.warn as SinonStub).calledOnce).to.be.true
+    expect((cmd.warn as SinonStub).firstCall.args[0]).to.include('Could not resolve the Bitbucket account name')
+    expect(cloneRepositoryStub.firstCall.args[0].credentials.username).to.equal('test@example.com')
+    expect(cloneRepositoryStub.firstCall.args[0].credentials.password).to.equal('test-token')
+  })
+
+  it('falls back to the profile email when resolving the account name throws', async () => {
+    getCurrentUserStub.rejects(new Error('network down'))
+
+    const cmd = makeCommand(['ws', 'repo'])
+    await cmd.run()
+
+    expect((cmd.warn as SinonStub).calledOnce).to.be.true
+    expect(cloneRepositoryStub.firstCall.args[0].credentials.username).to.equal('test@example.com')
+    expect(clearClientsStub.calledOnce).to.be.true
+    expect((cmd.logJson as SinonStub).called).to.be.false
+  })
+
+  it('never resolves the username anonymously or after a failed repository lookup', async () => {
+    manager.loadAuthConfig.resolves(undefined)
+    manager.readProfiles.rejects(new Error('No authentication profiles found'))
+
+    const cmd = makeCommand(['ws', 'repo'])
+    await cmd.run()
+
+    expect(getCurrentUserStub.called).to.be.false
   })
 
   it('selects a named profile with -p', async () => {
@@ -145,7 +193,7 @@ describe('repo:clone', () => {
     expect(cloneRepositoryStub.firstCall.args[0].credentials).to.deep.equal({
       host: 'bitbucket.org',
       password: 'test-token',
-      username: 'test@example.com',
+      username: 'bb-account',
     })
   })
 
@@ -242,6 +290,7 @@ describe('repo:clone', () => {
     const cmd = makeCommand(['ws', 'repo'])
     await expectErrorExit(cmd, /network down/)
 
+    expect(getCurrentUserStub.called).to.be.false
     expect(clearClientsStub.calledOnce).to.be.true
     expect(cloneRepositoryStub.called).to.be.false
   })

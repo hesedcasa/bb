@@ -26,7 +26,7 @@ $ npm install -g @hesed/bb
 $ bb COMMAND
 running command...
 $ bb (--version)
-@hesed/bb/0.14.0 linux-x64 node-v22.23.4
+@hesed/bb/0.14.0 linux-x64 node-v24.22.1
 $ bb --help [COMMAND]
 USAGE
   $ bb COMMAND
@@ -69,6 +69,7 @@ USAGE
 * [`bb bb pr unapprove WORKSPACE REPOSLUG PULLREQUESTID`](#bb-bb-pr-unapprove-workspace-reposlug-pullrequestid)
 * [`bb bb pr update WORKSPACE REPOSLUG PULLREQUESTID`](#bb-bb-pr-update-workspace-reposlug-pullrequestid)
 * [`bb bb repo WORKSPACE REPOSLUG`](#bb-bb-repo-workspace-reposlug)
+* [`bb bb repo clone WORKSPACE REPOSLUG [DESTINATION]`](#bb-bb-repo-clone-workspace-reposlug-destination)
 * [`bb bb repo create WORKSPACE REPOSLUG`](#bb-bb-repo-create-workspace-reposlug)
 * [`bb bb repo delete WORKSPACE REPOSLUG`](#bb-bb-repo-delete-workspace-reposlug)
 * [`bb bb repo list WORKSPACE`](#bb-bb-repo-list-workspace)
@@ -972,6 +973,49 @@ EXAMPLES
 ```
 
 _See code: [src/commands/bb/repo/index.ts](https://github.com/hesedcasa/bb/blob/v0.14.0/src/commands/bb/repo/index.ts)_
+
+## `bb bb repo clone WORKSPACE REPOSLUG [DESTINATION]`
+
+Clone a repository with non-interactive, profile-based authentication
+
+```
+USAGE
+  $ bb bb repo clone WORKSPACE REPOSLUG [DESTINATION] [-p <value>] [--protocol https|ssh]
+
+ARGUMENTS
+  WORKSPACE      Workspace slug or UUID
+  REPOSLUG       Repository slug
+  [DESTINATION]  Destination directory (defaults to the repository slug)
+
+FLAGS
+  -p, --profile=<value>    Authentication profile name
+      --protocol=<option>  [default: https] Clone protocol (uses the API-declared clone URL for the protocol)
+                           <options: https|ssh>
+
+DESCRIPTION
+  Clone a repository with non-interactive, profile-based authentication
+
+  Uses the repository's API-declared clone URL and shells out to the local git binary. With a configured profile
+  (default for https), the profile's API token authenticates the clone: the Bitbucket account name is resolved with GET
+  /2.0/user (the git endpoint does not accept the profile email as a username) and the credentials are handed to the
+  spawned git process only — never to argv, output, or the persisted remote URL. Requires Git 2.31 or newer for
+  authenticated https clones.
+
+  --protocol ssh performs no credential injection: your ssh agent and keys apply. Without any configured profile, an
+  anonymous API lookup is attempted (works for publicly discoverable repositories only) and, for https, a plain git
+  clone runs with git's own authentication.
+
+EXAMPLES
+  $ bb bb repo clone my-workspace my-repo
+
+  $ bb bb repo clone my-workspace my-repo ~/src/my-repo
+
+  $ bb bb repo clone my-workspace my-repo --protocol ssh
+
+  $ bb bb repo clone my-workspace my-repo -p work
+```
+
+_See code: [src/commands/bb/repo/clone.ts](https://github.com/hesedcasa/bb/blob/v0.14.0/src/commands/bb/repo/clone.ts)_
 
 ## `bb bb repo create WORKSPACE REPOSLUG`
 

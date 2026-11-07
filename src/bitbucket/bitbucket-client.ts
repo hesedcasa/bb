@@ -47,6 +47,19 @@ export async function getRepository(config: AuthConfig | undefined, workspace: s
   return bb.getRepository(workspace, repoSlug)
 }
 
+/**
+ * Get the authenticated user
+ *
+ * Used by `repo clone` to resolve the Bitbucket account name for git
+ * authentication: the git endpoint rejects the profile email as username,
+ * while the API accepts it, so the account name is resolved with this
+ * endpoint (which works with email + API token) before cloning.
+ */
+export async function getCurrentUser(config: AuthConfig): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.getCurrentUser()
+}
+
 export async function getCommit(
   config: AuthConfig,
   workspace: string,

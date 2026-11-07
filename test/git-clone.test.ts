@@ -149,6 +149,12 @@ describe('git-clone', () => {
       expect(helper).to.not.include(credentials.username)
       expect(helper).to.include(credentials.host)
     })
+
+    it('starts with the `!` shell-command prefix so git runs it without the credential- wrapper', () => {
+      // Without it, git >= 2.36 prefixes `git credential-` to the whole
+      // string, failing loudly on stderr while still delivering credentials.
+      expect(buildCredentialHelper(credentials.host).startsWith('! ')).to.be.true
+    })
   })
 
   describe('buildAuthenticatedEnv', () => {
@@ -318,6 +324,28 @@ describe('git-clone', () => {
 
       expect(spawnStub.callCount).to.equal(2)
       expect(spawnStub.secondCall.args[1]).to.deep.equal(['clone', '--', url, path.resolve('/tmp/dest')])
+    })
+
+    it('keeps the version-probe output out of the caller output sink', async () => {
+      const chunks: string[] = []
+      const promise = cloneRepository({
+        credentials,
+        destination: '/tmp/dest',
+        url,
+        write(c: string) {
+          chunks.push(c)
+        },
+      })
+      await until(() => spawnStub.callCount === 1)
+      children[0].stdout.emit('data', 'git version 2.39.5\n')
+      children[0].emit('close', 0, null)
+      await until(() => spawnStub.callCount === 2)
+      children[1].stderr.emit('data', 'Cloning into dest\n')
+      children[1].emit('close', 0, null)
+      await promise
+
+      expect(chunks.join('')).to.not.include('git version')
+      expect(chunks.join('')).to.include('Cloning into dest')
     })
 
     it('rejects with a fixed message when git is too old and never clones', async () => {
@@ -586,9 +614,33 @@ describe('git-clone', () => {
         input: stdin,
       })
 
+    it('runs noise-free as a shell script in both git helper compositions', () => {
+      const helper = buildCredentialHelper('bitbucket.org')
+      // git strips the leading `!`; without it git >= 2.36 prefixes
+      // `git credential-` to the whole string and fails loudly on stderr.
+      expect(helper.startsWith('! ')).to.be.true
+      const body = helper.slice(2)
+
+      for (const script of [
+        `${body} "$@"`, // old git: sh -c "<helper> \"$@\"" <helper> get
+        `${body} get`, // git >= 2.36: operation appended to the script text
+      ]) {
+        const result = spawnSync('sh', ['-c', script], {
+          env: {...process.env, BB_GIT_PASSWORD: credentials.password, BB_GIT_USERNAME: credentials.username},
+          input: 'protocol=https\nhost=bitbucket.org\n\n',
+        })
+
+        expect(result.status, script).to.equal(0)
+        expect(result.stderr.toString(), script).to.equal('')
+        expect(result.stdout.toString(), script).to.equal(
+          `username=${credentials.username}\npassword=${credentials.password}\n`,
+        )
+      }
+    })
+
     it('answers get with the child-env credentials (old git: operation as argument)', () => {
       const helper = buildCredentialHelper('bitbucket.org')
-      const result = spawnSync('sh', ['-c', helper, 'helper', 'get'], {
+      const result = spawnSync('sh', ['-c', `${helper.slice(2)} "$@"`, 'helper', 'get'], {
         env: {...process.env, BB_GIT_PASSWORD: credentials.password, BB_GIT_USERNAME: credentials.username},
         input: 'protocol=https\nhost=bitbucket.org\n\n',
       })
@@ -599,7 +651,7 @@ describe('git-clone', () => {
 
     it('answers get with the child-env credentials (git >= 2.36: operation appended to script)', () => {
       const helper = buildCredentialHelper('bitbucket.org')
-      const result = runHelper(`${helper} get`, 'protocol=https\nhost=bitbucket.org\n\n')
+      const result = runHelper(`${helper.slice(2)} get`, 'protocol=https\nhost=bitbucket.org\n\n')
 
       expect(result.status).to.equal(0)
       expect(result.stdout.toString()).to.equal(`username=${credentials.username}\npassword=${credentials.password}\n`)

@@ -4,7 +4,7 @@ import {Buffer} from 'node:buffer'
 import path from 'node:path'
 
 import {BaseCommand} from '../../../base-command.js'
-import {clearClients, getRepository} from '../../../bitbucket/bitbucket-client.js'
+import {clearClients, getCurrentUser, getRepository} from '../../../bitbucket/bitbucket-client.js'
 import {cloneRepository, type GitCloneCredentials} from '../../../git-clone.js'
 
 type CloneProtocol = 'https' | 'ssh'
@@ -166,7 +166,7 @@ export default class RepoClone extends BaseCommand {
   /* eslint-enable perfectionist/sort-objects */
   static override description = `Clone a repository with non-interactive, profile-based authentication
 
-Uses the repository's API-declared clone URL and shells out to the local git binary. With a configured profile (default for https), the profile's email and API token are handed to the spawned git process only — never to argv, output, or the persisted remote URL. Requires Git 2.31 or newer for authenticated https clones.
+Uses the repository's API-declared clone URL and shells out to the local git binary. With a configured profile (default for https), the profile's API token authenticates the clone: the Bitbucket account name is resolved with GET /2.0/user (the git endpoint does not accept the profile email as a username) and the credentials are handed to the spawned git process only — never to argv, output, or the persisted remote URL. Requires Git 2.31 or newer for authenticated https clones.
 
 --protocol ssh performs no credential injection: your ssh agent and keys apply. Without any configured profile, an anonymous API lookup is attempted (works for publicly discoverable repositories only) and, for https, a plain git clone runs with git's own authentication.`
   static override examples = [
@@ -243,6 +243,10 @@ Uses the repository's API-declared clone URL and shells out to the local git bin
     let result: ApiResult
     try {
       result = await getRepository(auth, args.workspace, args.repoSlug)
+      if (credentials && auth && result.success) {
+        // Must run before clearClients(): it reuses the same cached client.
+        credentials.username = await this.resolveGitUsername(auth)
+      }
     } finally {
       clearClients()
     }
@@ -263,6 +267,32 @@ Uses the repository's API-declared clone URL and shells out to the local git bin
     this.log(destination)
   }
 
+  /**
+   * Resolve the Bitbucket account name to use as the git HTTP username.
+   *
+   * Bitbucket Cloud's git endpoint rejects the profile email as the username
+   * (while the API accepts it), so the account name is resolved with
+   * `GET /2.0/user`, which authenticates with the profile's email + API
+   * token. If it cannot be resolved, the profile email is used as a
+   * documented fallback and the clone may fail with a sanitized 401.
+   */
+  private async resolveGitUsername(auth: AuthConfig): Promise<string> {
+    try {
+      const user = await getCurrentUser(auth)
+      const username = (user.data as null | {username?: unknown})?.username
+      if (typeof username === 'string' && user.success && username.trim() !== '') {
+        return username
+      }
+    } catch {
+      // Fall through to the email fallback — never surface /user internals.
+    }
+
+    this.warn(
+      'Could not resolve the Bitbucket account name for the profile — using the profile email as the git username; the clone may fail if Bitbucket rejects it.',
+    )
+    return auth.email ?? ''
+  }
+
   private credentialsFrom(auth: AuthConfig): GitCloneCredentials {
     if (!auth.email) {
       throw new Error('The selected profile has no email address — required to authenticate an https clone.')
@@ -272,6 +302,8 @@ Uses the repository's API-declared clone URL and shells out to the local git bin
       throw new Error('The selected profile has no API token — required to authenticate an https clone.')
     }
 
+    // The email is the API-accepted username; resolveGitUsername() replaces
+    // it with the Bitbucket account name that the git endpoint requires.
     return {host: 'bitbucket.org', password: auth.apiToken, username: auth.email}
   }
 }

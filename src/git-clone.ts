@@ -60,6 +60,11 @@ export class GitCloneError extends Error {}
 
 const REDACTED_PLACEHOLDER = '[REDACTED]'
 
+/** Discard sink for internal probes whose output is consumed in-process. */
+const discardSink = (chunk: string): void => {
+  void chunk
+}
+
 /**
  * Operational variables copied into the authenticated child environment.
  *
@@ -110,12 +115,13 @@ const OPERATIONAL_ENV_KEYS = [
 /**
  * Build the secret-free credential helper command string.
  *
- * The credential request arrives on stdin. Composition of the helper differs
- * across git versions: recent git (>= 2.36) runs `sh -c "<helper> <operation>"`
- * (the operation token is appended to the script text), while older versions
- * pass the operation as an argument (`sh -c "<helper> \"$@\"" ...`). The
- * helper therefore ignores the operation completely — its stdout is only
- * consulted for `get`, and a trailing bare `:` absorbs whatever git appends:
+ * The credential request arrives on stdin. The leading `!` makes git run the
+ * remainder as a shell script directly (with the operation appended to the
+ * script text); without it, git >= 2.36 prefixes `git credential-` to the
+ * whole string, which fails loudly on stderr — the space after `!` also keeps
+ * the script parseable under the older `sh -c "<helper> \"$@\""` composition.
+ * The helper ignores the operation completely — its stdout is only consulted
+ * for `get`, and a trailing bare `:` absorbs whatever git appends:
  * - scans stdin for an exact `host=<expected>` line so the credentials are
  *   only ever offered for the selected HTTPS host (redirects to other hosts
  *   get nothing),
@@ -125,14 +131,17 @@ const OPERATIONAL_ENV_KEYS = [
  * No secret is interpolated into this string — only the host name.
  */
 export function buildCredentialHelper(host: string): string {
-  return [
-    'h=',
-    'while IFS= read -r l; do [ "$l" = "host=' + host + '" ] && h=1; done',
-    'test -n "$h" || exit 0',
-    String.raw`printf "username=%s\n" "$BB_GIT_USERNAME"`,
-    String.raw`printf "password=%s\n" "$BB_GIT_PASSWORD"`,
-    ':',
-  ].join('; ')
+  return (
+    '! ' +
+    [
+      'h=',
+      'while IFS= read -r l; do [ "$l" = "host=' + host + '" ] && h=1; done',
+      'test -n "$h" || exit 0',
+      String.raw`printf "username=%s\n" "$BB_GIT_USERNAME"`,
+      String.raw`printf "password=%s\n" "$BB_GIT_PASSWORD"`,
+      ':',
+    ].join('; ')
+  )
 }
 
 /**
@@ -388,7 +397,9 @@ export async function cloneRepository(options: CloneRepositoryOptions): Promise<
   const argv = ['clone', '--', options.url, path.resolve(options.destination)]
 
   if (options.credentials) {
-    const versionResult = await runGit(['--version'], {collectStdout: true})
+    // The version output is consumed internally; it never reaches the
+    // caller's output sink.
+    const versionResult = await runGit(['--version'], {collectStdout: true, write: discardSink})
     if (versionResult.spawnError) {
       throw new GitCloneError('Git executable not found. Install Git and make sure it is available on your PATH.')
     }
