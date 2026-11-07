@@ -198,6 +198,90 @@ describe('BitbucketApi', () => {
       expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo')
       expect(options.method).to.equal('GET')
     })
+
+    it('returns the raw response data including links.clone', async () => {
+      const responseData = {
+        links: {
+          clone: [
+            {href: 'https://bitbucket.org/ws/repo.git', name: 'https'},
+            {href: 'git@bitbucket.org:ws/repo.git', name: 'ssh'},
+          ],
+        },
+        slug: 'repo',
+      }
+      fetchStub.resolves(Response.json(responseData, {status: 200}))
+
+      const result = await api.getRepository('ws', 'repo')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal(responseData)
+    })
+
+    it('encodes structure-breaking characters but preserves ordinary slugs', async () => {
+      fetchStub.resolves(Response.json({}, {status: 200}))
+
+      await api.getRepository('ws/a/b', 'repo?x=1')
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws%2Fa%2Fb/repo%3Fx%3D1')
+    })
+
+    it('preserves pre-encoded and UUID inputs', async () => {
+      fetchStub.resolves(Response.json({}, {status: 200}))
+
+      await api.getRepository('{uuid-1}', 'repo~dot.name')
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/{uuid-1}/repo~dot.name')
+    })
+  })
+
+  describe('anonymous access', () => {
+    let anonymousApi: BitbucketApi
+
+    beforeEach(() => {
+      anonymousApi = new BitbucketApi()
+    })
+
+    it('getRepository omits the Authorization header entirely', async () => {
+      fetchStub.resolves(Response.json({slug: 'repo'}, {status: 200}))
+
+      const result = await anonymousApi.getRepository('ws', 'repo')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo')
+      expect(options.headers.Authorization).to.be.undefined
+      expect(result.success).to.be.true
+    })
+
+    it('getRepository still fails on API errors when anonymous', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'Not Found'}}, {status: 404}))
+
+      const result = await anonymousApi.getRepository('ws', 'missing')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal({error: {message: 'Not Found'}})
+    })
+
+    it('non-getRepository operations fail instead of becoming anonymous', async () => {
+      fetchStub.resolves(Response.json({}, {status: 200}))
+
+      const result = await anonymousApi.getWorkspace('ws')
+
+      expect(fetchStub.called).to.be.false
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Bitbucket API credentials are required for this operation')
+    })
+
+    it('text requests fail instead of becoming anonymous', async () => {
+      fetchStub.resolves(new Response('diff', {status: 200}))
+
+      const result = await anonymousApi.getPullRequestDiff('ws', 'repo', 1)
+
+      expect(fetchStub.called).to.be.false
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Bitbucket API credentials are required for this operation')
+    })
   })
 
   describe('listRepositories', () => {

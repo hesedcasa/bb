@@ -34,8 +34,16 @@ export async function listRepositories(
   return bb.listRepositories(workspace, page, pagelen, role, q)
 }
 
-export async function getRepository(config: AuthConfig, workspace: string, repoSlug: string): Promise<ApiResult> {
-  const bb = await getClient(config)
+/**
+ * Get repository details
+ *
+ * `config` may be undefined for anonymous lookup (used by the profile-less
+ * `repo clone` fallback). The anonymous client is instantiated directly so it
+ * never touches the profile-client cache — an undefined config must not evict
+ * or reuse the cached authenticated client.
+ */
+export async function getRepository(config: AuthConfig | undefined, workspace: string, repoSlug: string): Promise<ApiResult> {
+  const bb = config ? await getClient(config) : new BitbucketApi()
   return bb.getRepository(workspace, repoSlug)
 }
 

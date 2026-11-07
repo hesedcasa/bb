@@ -184,6 +184,31 @@ describe('bitbucket-client', () => {
       await getRepositoryFn(mockConfig, 'ws', 'repo')
       expect(mockApiInstance.getRepository.calledWith('ws', 'repo')).to.be.true
     })
+
+    it('reuses the cached client when authenticated', async () => {
+      await getRepositoryFn(mockConfig, 'ws', 'repo')
+      await getRepositoryFn(mockConfig, 'ws', 'repo')
+
+      expect(BitbucketApiStub.calledOnce).to.be.true
+    })
+
+    it('creates an uncached anonymous client when config is undefined', async () => {
+      await getRepositoryFn(undefined, 'ws', 'repo')
+
+      expect(BitbucketApiStub.lastCall.args).to.deep.equal([])
+      expect(mockApiInstance.getRepository.calledWith('ws', 'repo')).to.be.true
+    })
+
+    it('anonymous lookup does not disturb the cached authenticated client', async () => {
+      await getRepositoryFn(mockConfig, 'ws', 'repo')
+      await getRepositoryFn(undefined, 'ws', 'repo')
+      await getRepositoryFn(mockConfig, 'ws', 'repo')
+
+      // One construction for the first authenticated call, one for the
+      // anonymous instance; the final authenticated call must reuse the
+      // original cache, not the anonymous instance.
+      expect(BitbucketApiStub.callCount).to.equal(2)
+    })
   })
 
   describe('createRepository', () => {

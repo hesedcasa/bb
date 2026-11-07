@@ -1,3 +1,3 @@
 @echo off
 
-node --loader ts-node/esm --no-warnings=ExperimentalWarning "%~dp0\dev" %*
+node --loader ts-node/esm --experimental-specifier-resolution=node --no-warnings=ExperimentalWarning "%~dp0\dev" %*
