@@ -1,5 +1,8 @@
 import {type ApiResult, type AuthConfig, buildAuthHeader} from '@hesed/plugin-lib'
 
+// Step logs are served as application/octet-stream; text/plain alone gets a 406.
+const STEP_LOG_ACCEPT = 'application/octet-stream, text/plain;q=0.9, */*;q=0.8'
+
 /**
  * Bitbucket API Utility Module
  * Provides core Bitbucket REST API operations
@@ -234,8 +237,9 @@ export class BitbucketApi {
   /**
    * Get a pipeline step's build log
    *
-   * Bitbucket serves step logs as plain text, so this goes through
-   * `requestText` and returns the raw log string in `ApiResult.data`.
+   * Bitbucket serves step logs as `application/octet-stream` (a redirect to
+   * the stored log file) and answers 406 to `Accept: text/plain`, so this asks
+   * for octet-stream and returns the raw log string in `ApiResult.data`.
    */
   async getPipelineStepLog(
     workspace: string,
@@ -244,7 +248,7 @@ export class BitbucketApi {
     stepUuid: string,
   ): Promise<ApiResult> {
     const path = `/repositories/${this.toPathSegment(workspace)}/${this.toPathSegment(repoSlug)}/pipelines/${this.toPathSegment(pipelineUuid)}/steps/${this.toPathSegment(stepUuid)}/log`
-    return this.requestText(path)
+    return this.requestText(path, STEP_LOG_ACCEPT)
   }
 
   /**
@@ -762,11 +766,11 @@ export class BitbucketApi {
   /**
    * Make an authenticated request expecting a plain text response
    */
-  private async requestText(path: string): Promise<ApiResult> {
+  private async requestText(path: string, accept = 'text/plain'): Promise<ApiResult> {
     try {
       const url = `${this.getBaseUrl()}${path}`
       const headers: Record<string, string> = {
-        Accept: 'text/plain',
+        Accept: accept,
         Authorization: this.getAuthHeader(),
       }
 

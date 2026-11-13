@@ -1013,14 +1013,14 @@ describe('BitbucketApi', () => {
       expect(options.method).to.be.undefined
     })
 
-    it('sends Accept: text/plain and the authorization header', async () => {
+    it('accepts octet-stream (Bitbucket 406s a text/plain-only Accept) and sends the authorization header', async () => {
       const expectedAuth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64')
       fetchStub.resolves(new Response('build log', {status: 200}))
 
       await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
 
       const [, options] = fetchStub.firstCall.args
-      expect(options.headers.Accept).to.equal('text/plain')
+      expect(options.headers.Accept).to.equal('application/octet-stream, text/plain;q=0.9, */*;q=0.8')
       expect(options.headers.Authorization).to.equal(`Basic ${expectedAuth}`)
     })
 
