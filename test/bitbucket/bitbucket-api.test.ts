@@ -899,15 +899,26 @@ describe('BitbucketApi', () => {
   })
 
   describe('listPipelineSteps', () => {
-    it('calls GET /repositories/:workspace/:repoSlug/pipelines/:uuid/steps/', async () => {
+    it('calls GET /repositories/:workspace/:repoSlug/pipelines/:uuid/steps/ with pagination params', async () => {
       fetchStub.resolves(Response.json({values: []}, {status: 200}))
 
       await api.listPipelineSteps('ws', 'repo', '{pipe-1}')
 
       const [url, options] = fetchStub.firstCall.args
-      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pipelines/{pipe-1}/steps/')
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pipelines/{pipe-1}/steps/?page=1&pagelen=10')
       expect(options.method).to.equal('GET')
       expect(options.headers.Accept).to.equal('application/json')
+    })
+
+    it('requests the requested page and page size', async () => {
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
+
+      await api.listPipelineSteps('ws', 'repo', '{pipe-1}', 2, 25)
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.include('/steps/?')
+      expect(url).to.include('page=2')
+      expect(url).to.include('pagelen=25')
     })
 
     it('encodes structure-breaking characters but preserves brace-wrapped UUIDs', async () => {
@@ -917,7 +928,7 @@ describe('BitbucketApi', () => {
 
       const [url] = fetchStub.firstCall.args
       expect(url).to.equal(
-        'https://api.bitbucket.org/2.0/repositories/ws%2Fa%2Fb/repo%3Fx%3D1/pipelines/%7Bpipe%231%7D/steps/',
+        'https://api.bitbucket.org/2.0/repositories/ws%2Fa%2Fb/repo%3Fx%3D1/pipelines/%7Bpipe%231%7D/steps/?page=1&pagelen=10',
       )
     })
 

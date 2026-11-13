@@ -306,11 +306,11 @@ describe('bitbucket-client', () => {
   })
 
   describe('listPipelineSteps', () => {
-    it('creates the client with the given config and forwards the args unchanged', async () => {
-      const result = await listPipelineStepsFn(mockConfig, 'ws', 'repo', '{pipe-1}')
+    it('creates the client with the given config and forwards the args unchanged, including page and pagelen', async () => {
+      const result = await listPipelineStepsFn(mockConfig, 'ws', 'repo', '{pipe-1}', 2, 25)
       expect(BitbucketApiStub.calledWith(mockConfig)).to.be.true
       expect(mockApiInstance.listPipelineSteps.calledOnce).to.be.true
-      expect(mockApiInstance.listPipelineSteps.calledWith('ws', 'repo', '{pipe-1}')).to.be.true
+      expect(mockApiInstance.listPipelineSteps.calledWith('ws', 'repo', '{pipe-1}', 2, 25)).to.be.true
       expect(result).to.deep.equal(mockResult)
     })
 

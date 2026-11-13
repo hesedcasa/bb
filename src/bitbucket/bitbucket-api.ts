@@ -359,9 +359,23 @@ export class BitbucketApi {
    *
    * Returns a single page of the collection; the pagination envelope
    * (including the `next` link) is preserved for the caller.
+   *
+   * @param workspace - Workspace slug or UUID
+   * @param repoSlug - Repository slug
+   * @param pipelineUuid - Pipeline UUID
+   * @param page - Page number
+   * @param pagelen - Number of items per page
    */
-  async listPipelineSteps(workspace: string, repoSlug: string, pipelineUuid: string): Promise<ApiResult> {
-    const path = `/repositories/${this.toPathSegment(workspace)}/${this.toPathSegment(repoSlug)}/pipelines/${this.toPathSegment(pipelineUuid)}/steps/`
+  // eslint-disable-next-line max-params
+  async listPipelineSteps(
+    workspace: string,
+    repoSlug: string,
+    pipelineUuid: string,
+    page = 1,
+    pagelen = 10,
+  ): Promise<ApiResult> {
+    const params = new URLSearchParams({page: String(page), pagelen: String(pagelen)})
+    const path = `/repositories/${this.toPathSegment(workspace)}/${this.toPathSegment(repoSlug)}/pipelines/${this.toPathSegment(pipelineUuid)}/steps/?${params.toString()}`
     return this.request(path)
   }
 

@@ -376,14 +376,17 @@ export async function getPipeline(
  *
  * Returns a single page of the collection, pagination metadata included.
  */
+// eslint-disable-next-line max-params
 export async function listPipelineSteps(
   config: AuthConfig,
   workspace: string,
   repoSlug: string,
   pipelineUuid: string,
+  page = 1,
+  pagelen = 10,
 ): Promise<ApiResult> {
   const bb = await getClient(config)
-  return bb.listPipelineSteps(workspace, repoSlug, pipelineUuid)
+  return bb.listPipelineSteps(workspace, repoSlug, pipelineUuid, page, pagelen)
 }
 
 /**

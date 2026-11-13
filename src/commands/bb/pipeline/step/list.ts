@@ -16,6 +16,8 @@ export default class PipelineStepList extends BaseCommand {
   static override description = 'List the steps of a specific pipeline'
   static override examples = ['<%= config.bin %> <%= command.id %> my-workspace my-repo {pipeline-uuid}']
   static override flags = {
+    page: Flags.integer({default: 1, description: 'Page number', required: false}),
+    pagelen: Flags.integer({default: 10, description: 'Number of items per page', required: false}),
     profile: Flags.string({char: 'p', description: 'Authentication profile name', required: false}),
     toon: Flags.boolean({description: 'Format output as toon', required: false}),
   }
@@ -28,7 +30,7 @@ export default class PipelineStepList extends BaseCommand {
       this.error(`Missing authentication config.`)
     }
 
-    const result = await listPipelineSteps(auth, args.workspace, args.repoSlug, args.pipelineUuid)
+    const result = await listPipelineSteps(auth, args.workspace, args.repoSlug, args.pipelineUuid, flags.page, flags.pagelen)
     clearClients()
 
     if (flags.toon) {

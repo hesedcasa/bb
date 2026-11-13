@@ -69,10 +69,19 @@ describe('pipeline:step:list', () => {
 
     expect(createProfileManagerStub.calledOnce).to.be.true
     expect(listPipelineStepsStub.calledOnce).to.be.true
-    expect(listPipelineStepsStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', '{pipe-uuid}'])
+    expect(listPipelineStepsStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', '{pipe-uuid}', 1, 10])
     expect(clearClientsStub.calledOnce).to.be.true
     expect(result).to.deep.equal(mockResult)
     expect(result.data.values[0].state.result.name).to.equal('FAILED')
+  })
+
+  it('forwards --page and --pagelen so later step pages are reachable', async () => {
+    const cmd = makeCommand(['my-ws', 'my-repo', '{pipe-uuid}', '--page', '2', '--pagelen', '25'])
+
+    await cmd.run()
+
+    expect(listPipelineStepsStub.calledOnce).to.be.true
+    expect(listPipelineStepsStub.firstCall.args).to.deep.equal([mockAuth, 'my-ws', 'my-repo', '{pipe-uuid}', 2, 25])
   })
 
   it('uses default JSON mode', async () => {

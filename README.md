@@ -441,7 +441,7 @@ List the steps of a specific pipeline
 
 ```
 USAGE
-  $ bb bb pipeline step list WORKSPACE REPOSLUG PIPELINEUUID [-p <value>] [--toon]
+  $ bb bb pipeline step list WORKSPACE REPOSLUG PIPELINEUUID [--page <value>] [--pagelen <value>] [-p <value>] [--toon]
 
 ARGUMENTS
   WORKSPACE     Workspace slug or UUID
@@ -450,6 +450,8 @@ ARGUMENTS
 
 FLAGS
   -p, --profile=<value>  Authentication profile name
+      --page=<value>     [default: 1] Page number
+      --pagelen=<value>  [default: 10] Number of items per page
       --toon             Format output as toon
 
 DESCRIPTION
