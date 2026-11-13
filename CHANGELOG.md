@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/hesedcasa/bb/compare/v0.16.0...v0.16.1) (2026-11-13)
+
+
+### 🛠️ Fixes
+
+* **pipeline:** accept octet-stream for step logs ([#191](https://github.com/hesedcasa/bb/issues/191)) ([71545fb](https://github.com/hesedcasa/bb/commit/71545fbfca22ce2bf4818ef1cc3075fe4e2c9096))
+
 ## [0.16.0](https://github.com/hesedcasa/bb/compare/v0.15.0...v0.16.0) (2026-11-13)
 
 
