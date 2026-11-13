@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/hesedcasa/bb/compare/v0.15.0...v0.16.0) (2026-11-13)
+
+
+### 🎉 Features
+
+* **pipeline:** add step list and plain-text step log commands ([#189](https://github.com/hesedcasa/bb/issues/189)) ([365a077](https://github.com/hesedcasa/bb/commit/365a0776b8f0f8adc50d007c952730cecefaa87f))
+
 ## [0.15.0](https://github.com/hesedcasa/bb/compare/v0.14.0...v0.15.0) (2026-11-07)
 
 
