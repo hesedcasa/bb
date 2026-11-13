@@ -35,7 +35,7 @@ src/
 ├── commands/bb/      # Oclif commands, namespaced under bb/
 │   ├── auth/         # add, delete, list, profile, test, update (all plugin-lib factories)
 │   ├── commit/       # index (get), list
-│   ├── pipeline/     # index (list), get, trigger
+│   ├── pipeline/     # index (list), get, step/list, step/log, trigger
 │   ├── pr/           # index (get), activity, approve, comment, comment-delete,
 │   │                 # comment-reply, comment-resolve, comment-update, comments,
 │   │                 # commits, create, decline, diff, list, merge, unapprove, update
@@ -120,7 +120,9 @@ export default class RepoGet extends BaseCommand {
 }
 ```
 
-**Plain-text commands** (only `pr diff` today): omit `--toon`, override `jsonEnabled()` to `false`, and `this.log(result.data as string)` on success / `this.logJson(result)` on failure.
+**Plain-text commands** (`pr diff`, `pipeline step log`): omit `--toon`, override `jsonEnabled()` to `false`, and `this.log(result.data as string)` on success / `this.logJson(result)` on failure.
+
+The JSON commands' `--toon` exception: `pipeline step list` logs TOON on success, but a failed result still goes through `logJson(result)` even when `--toon` is set — JSON mode is off under `--toon`, so returning the failed result alone would print nothing, and the contract requires a structured JSON error rather than a TOON-formatted one.
 
 **Flag validation** goes before auth loading, via `this.error()` — see the paired `--file`/`--line` check in `pr/comment.ts`.
 
