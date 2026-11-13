@@ -232,6 +232,22 @@ export class BitbucketApi {
   }
 
   /**
+   * Get a pipeline step's build log
+   *
+   * Bitbucket serves step logs as plain text, so this goes through
+   * `requestText` and returns the raw log string in `ApiResult.data`.
+   */
+  async getPipelineStepLog(
+    workspace: string,
+    repoSlug: string,
+    pipelineUuid: string,
+    stepUuid: string,
+  ): Promise<ApiResult> {
+    const path = `/repositories/${this.toPathSegment(workspace)}/${this.toPathSegment(repoSlug)}/pipelines/${this.toPathSegment(pipelineUuid)}/steps/${this.toPathSegment(stepUuid)}/log`
+    return this.requestText(path)
+  }
+
+  /**
    * Get a specific pull request
    */
   async getPullRequest(workspace: string, repoSlug: string, pullRequestId: number): Promise<ApiResult> {
@@ -336,6 +352,17 @@ export class BitbucketApi {
     if (sort) params.set('sort', sort)
 
     return this.request(`/repositories/${workspace}/${repoSlug}/pipelines/?${params.toString()}`)
+  }
+
+  /**
+   * List the steps of a specific pipeline
+   *
+   * Returns a single page of the collection; the pagination envelope
+   * (including the `next` link) is preserved for the caller.
+   */
+  async listPipelineSteps(workspace: string, repoSlug: string, pipelineUuid: string): Promise<ApiResult> {
+    const path = `/repositories/${this.toPathSegment(workspace)}/${this.toPathSegment(repoSlug)}/pipelines/${this.toPathSegment(pipelineUuid)}/steps/`
+    return this.request(path)
   }
 
   /**

@@ -24,6 +24,8 @@ describe('bitbucket-client', () => {
   let unapprovePullRequestFn: any
   let listPipelinesFn: any
   let getPipelineFn: any
+  let listPipelineStepsFn: any
+  let getPipelineStepLogFn: any
   let triggerPipelineFn: any
   let getBranchFn: any
   let listBranchesFn: any
@@ -43,11 +45,13 @@ describe('bitbucket-client', () => {
       deleteRepository: stub().resolves(mockResult),
       getBranch: stub().resolves(mockResult),
       getPipeline: stub().resolves(mockResult),
+      getPipelineStepLog: stub().resolves(mockResult),
       getPullRequest: stub().resolves(mockResult),
       getRepository: stub().resolves(mockResult),
       getWorkspace: stub().resolves(mockResult),
       listBranches: stub().resolves(mockResult),
       listPipelines: stub().resolves(mockResult),
+      listPipelineSteps: stub().resolves(mockResult),
       listPullRequests: stub().resolves(mockResult),
       listRepositories: stub().resolves(mockResult),
       listWorkspaces: stub().resolves(mockResult),
@@ -81,6 +85,8 @@ describe('bitbucket-client', () => {
     unapprovePullRequestFn = mod.unapprovePullRequest
     listPipelinesFn = mod.listPipelines
     getPipelineFn = mod.getPipeline
+    listPipelineStepsFn = mod.listPipelineSteps
+    getPipelineStepLogFn = mod.getPipelineStepLog
     triggerPipelineFn = mod.triggerPipeline
     getBranchFn = mod.getBranch
     listBranchesFn = mod.listBranches
@@ -296,6 +302,39 @@ describe('bitbucket-client', () => {
     it('delegates to api', async () => {
       await getPipelineFn(mockConfig, 'ws', 'repo', '{uuid}')
       expect(mockApiInstance.getPipeline.calledWith('ws', 'repo', '{uuid}')).to.be.true
+    })
+  })
+
+  describe('listPipelineSteps', () => {
+    it('creates the client with the given config and forwards the args unchanged', async () => {
+      const result = await listPipelineStepsFn(mockConfig, 'ws', 'repo', '{pipe-1}')
+      expect(BitbucketApiStub.calledWith(mockConfig)).to.be.true
+      expect(mockApiInstance.listPipelineSteps.calledOnce).to.be.true
+      expect(mockApiInstance.listPipelineSteps.calledWith('ws', 'repo', '{pipe-1}')).to.be.true
+      expect(result).to.deep.equal(mockResult)
+    })
+
+    it('passes a failing result through unchanged', async () => {
+      const failure = {error: {message: 'Pipeline not found'}, success: false}
+      mockApiInstance.listPipelineSteps.resolves(failure)
+      const result = await listPipelineStepsFn(mockConfig, 'ws', 'repo', '{missing}')
+      expect(result).to.deep.equal(failure)
+    })
+  })
+
+  describe('getPipelineStepLog', () => {
+    it('forwards all args unchanged, including brace-wrapped UUIDs', async () => {
+      const result = await getPipelineStepLogFn(mockConfig, 'ws', 'repo', '{pipe-1}', '{step-1}')
+      expect(mockApiInstance.getPipelineStepLog.calledOnce).to.be.true
+      expect(mockApiInstance.getPipelineStepLog.calledWith('ws', 'repo', '{pipe-1}', '{step-1}')).to.be.true
+      expect(result).to.deep.equal(mockResult)
+    })
+
+    it('passes a failing result through unchanged', async () => {
+      const failure = {error: {message: 'Step not found'}, success: false}
+      mockApiInstance.getPipelineStepLog.resolves(failure)
+      const result = await getPipelineStepLogFn(mockConfig, 'ws', 'repo', '{pipe-1}', '{missing}')
+      expect(result).to.deep.equal(failure)
     })
   })
 

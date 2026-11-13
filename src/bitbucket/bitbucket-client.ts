@@ -371,6 +371,38 @@ export async function getPipeline(
   return bb.getPipeline(workspace, repoSlug, pipelineUuid)
 }
 
+/**
+ * List the steps of a pipeline
+ *
+ * Returns a single page of the collection, pagination metadata included.
+ */
+export async function listPipelineSteps(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pipelineUuid: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.listPipelineSteps(workspace, repoSlug, pipelineUuid)
+}
+
+/**
+ * Get a pipeline step's build log
+ *
+ * The log is plain text and is returned unmodified in `ApiResult.data`.
+ */
+// eslint-disable-next-line max-params
+export async function getPipelineStepLog(
+  config: AuthConfig,
+  workspace: string,
+  repoSlug: string,
+  pipelineUuid: string,
+  stepUuid: string,
+): Promise<ApiResult> {
+  const bb = await getClient(config)
+  return bb.getPipelineStepLog(workspace, repoSlug, pipelineUuid, stepUuid)
+}
+
 export async function triggerPipeline(
   config: AuthConfig,
   workspace: string,

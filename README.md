@@ -50,6 +50,8 @@ USAGE
 * [`bb bb commit list WORKSPACE REPOSLUG`](#bb-bb-commit-list-workspace-reposlug)
 * [`bb bb pipeline WORKSPACE REPOSLUG`](#bb-bb-pipeline-workspace-reposlug)
 * [`bb bb pipeline get WORKSPACE REPOSLUG PIPELINEUUID`](#bb-bb-pipeline-get-workspace-reposlug-pipelineuuid)
+* [`bb bb pipeline step list WORKSPACE REPOSLUG PIPELINEUUID`](#bb-bb-pipeline-step-list-workspace-reposlug-pipelineuuid)
+* [`bb bb pipeline step log WORKSPACE REPOSLUG PIPELINEUUID STEPUUID`](#bb-bb-pipeline-step-log-workspace-reposlug-pipelineuuid-stepuuid)
 * [`bb bb pipeline trigger WORKSPACE REPOSLUG`](#bb-bb-pipeline-trigger-workspace-reposlug)
 * [`bb bb pr WORKSPACE REPOSLUG PULLREQUESTID`](#bb-bb-pr-workspace-reposlug-pullrequestid)
 * [`bb bb pr activity WORKSPACE REPOSLUG PRID`](#bb-bb-pr-activity-workspace-reposlug-prid)
@@ -432,6 +434,58 @@ EXAMPLES
 ```
 
 _See code: [src/commands/bb/pipeline/get.ts](https://github.com/hesedcasa/bb/blob/v0.15.0/src/commands/bb/pipeline/get.ts)_
+
+## `bb bb pipeline step list WORKSPACE REPOSLUG PIPELINEUUID`
+
+List the steps of a specific pipeline
+
+```
+USAGE
+  $ bb bb pipeline step list WORKSPACE REPOSLUG PIPELINEUUID [-p <value>] [--toon]
+
+ARGUMENTS
+  WORKSPACE     Workspace slug or UUID
+  REPOSLUG      Repository slug
+  PIPELINEUUID  Pipeline UUID
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+      --toon             Format output as toon
+
+DESCRIPTION
+  List the steps of a specific pipeline
+
+EXAMPLES
+  $ bb bb pipeline step list my-workspace my-repo {pipeline-uuid}
+```
+
+_See code: [src/commands/bb/pipeline/step/list.ts](https://github.com/hesedcasa/bb/blob/v0.15.0/src/commands/bb/pipeline/step/list.ts)_
+
+## `bb bb pipeline step log WORKSPACE REPOSLUG PIPELINEUUID STEPUUID`
+
+Get a pipeline step's build log as plain text
+
+```
+USAGE
+  $ bb bb pipeline step log WORKSPACE REPOSLUG PIPELINEUUID STEPUUID [-p <value>]
+
+ARGUMENTS
+  WORKSPACE     Workspace slug or UUID
+  REPOSLUG      Repository slug
+  PIPELINEUUID  Pipeline UUID
+  STEPUUID      Step UUID
+
+FLAGS
+  -p, --profile=<value>  Authentication profile name
+
+DESCRIPTION
+  Get a pipeline step's build log as plain text
+
+EXAMPLES
+  $ bb bb pipeline step log my-workspace my-repo {pipeline-uuid} {step-uuid}
+```
+
+_See code: [src/commands/bb/pipeline/step/log.ts](https://github.com/hesedcasa/bb/blob/v0.15.0/src/commands/bb/pipeline/step/log.ts)_
 
 ## `bb bb pipeline trigger WORKSPACE REPOSLUG`
 

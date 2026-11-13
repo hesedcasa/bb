@@ -898,6 +898,189 @@ describe('BitbucketApi', () => {
     })
   })
 
+  describe('listPipelineSteps', () => {
+    it('calls GET /repositories/:workspace/:repoSlug/pipelines/:uuid/steps/', async () => {
+      fetchStub.resolves(Response.json({values: []}, {status: 200}))
+
+      await api.listPipelineSteps('ws', 'repo', '{pipe-1}')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pipelines/{pipe-1}/steps/')
+      expect(options.method).to.equal('GET')
+      expect(options.headers.Accept).to.equal('application/json')
+    })
+
+    it('encodes structure-breaking characters but preserves brace-wrapped UUIDs', async () => {
+      fetchStub.resolves(Response.json({}, {status: 200}))
+
+      await api.listPipelineSteps('ws/a/b', 'repo?x=1', '{pipe#1}')
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.equal(
+        'https://api.bitbucket.org/2.0/repositories/ws%2Fa%2Fb/repo%3Fx%3D1/pipelines/%7Bpipe%231%7D/steps/',
+      )
+    })
+
+    it('returns the step collection page unchanged, pagination metadata included', async () => {
+      const page = {
+        next: 'https://api.bitbucket.org/2.0/repositories/ws/repo/pipelines/{pipe-1}/steps/?page=2',
+        page: 1,
+        pagelen: 10,
+        values: [
+          {
+            name: 'Build',
+            state: {name: 'COMPLETED', result: {name: 'FAILED'}, type: 'pipeline_state_completed'},
+            uuid: '{step-1}',
+          },
+          {name: 'Test', state: {name: 'IN_PROGRESS', type: 'pipeline_state_in_progress'}, uuid: '{step-2}'},
+        ],
+      }
+      fetchStub.resolves(Response.json(page, {status: 200}))
+
+      const result = await api.listPipelineSteps('ws', 'repo', '{pipe-1}')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal(page)
+    })
+
+    it('succeeds with an empty values array', async () => {
+      fetchStub.resolves(Response.json({page: 1, pagelen: 10, values: []}, {status: 200}))
+
+      const result = await api.listPipelineSteps('ws', 'repo', '{pipe-1}')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.deep.equal({page: 1, pagelen: 10, values: []})
+    })
+
+    it('reports failure without throwing on a JSON 404', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'Pipeline not found'}}, {status: 404}))
+
+      const result = await api.listPipelineSteps('ws', 'repo', '{missing}')
+
+      expect(result.success).to.be.false
+      expect(result.data).to.be.undefined
+      expect(result.error).to.deep.equal({error: {message: 'Pipeline not found'}})
+    })
+
+    it('reports failure on a JSON 401', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'Invalid credentials'}}, {status: 401}))
+
+      const result = await api.listPipelineSteps('ws', 'repo', '{pipe-1}')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal({error: {message: 'Invalid credentials'}})
+    })
+
+    it('reports failure with raw text on a non-JSON HTTP error', async () => {
+      fetchStub.resolves(new Response('Service Unavailable', {status: 503}))
+
+      const result = await api.listPipelineSteps('ws', 'repo', '{pipe-1}')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Service Unavailable')
+    })
+
+    it('reports network failures as failed results', async () => {
+      fetchStub.rejects(new Error('Network timeout'))
+
+      const result = await api.listPipelineSteps('ws', 'repo', '{pipe-1}')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Network timeout')
+    })
+  })
+
+  describe('getPipelineStepLog', () => {
+    it('calls the steps/:uuid/log endpoint with brace-wrapped UUIDs intact', async () => {
+      fetchStub.resolves(new Response('build log', {status: 200}))
+
+      await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
+
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/repositories/ws/repo/pipelines/{pipe-1}/steps/{step-1}/log')
+      // requestText relies on fetch's default GET, so no method option is sent.
+      expect(options.method).to.be.undefined
+    })
+
+    it('sends Accept: text/plain and the authorization header', async () => {
+      const expectedAuth = Buffer.from(`${config.email}:${config.apiToken}`).toString('base64')
+      fetchStub.resolves(new Response('build log', {status: 200}))
+
+      await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
+
+      const [, options] = fetchStub.firstCall.args
+      expect(options.headers.Accept).to.equal('text/plain')
+      expect(options.headers.Authorization).to.equal(`Basic ${expectedAuth}`)
+    })
+
+    it('encodes structure-breaking characters in every path segment', async () => {
+      fetchStub.resolves(new Response('build log', {status: 200}))
+
+      await api.getPipelineStepLog('ws/a', 'repo?x', '{pipe#1}', '{step/1}')
+
+      const [url] = fetchStub.firstCall.args
+      expect(url).to.equal(
+        'https://api.bitbucket.org/2.0/repositories/ws%2Fa/repo%3Fx/pipelines/%7Bpipe%231%7D/steps/%7Bstep%2F1%7D/log',
+      )
+    })
+
+    it('preserves multiline log text, whitespace, and the trailing newline', async () => {
+      const logText = '+ make build\n\n  step 1: ok\n   indented   \nlast line\n'
+      fetchStub.resolves(new Response(logText, {status: 200}))
+
+      const result = await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.equal(logText)
+    })
+
+    it('keeps an empty log body an empty string', async () => {
+      fetchStub.resolves(new Response('', {status: 200}))
+
+      const result = await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
+
+      expect(result.success).to.be.true
+      expect(result.data).to.equal('')
+    })
+
+    it('reports failure without throwing on a JSON 404', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'Step not found'}}, {status: 404}))
+
+      const result = await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{missing}')
+
+      expect(result.success).to.be.false
+      expect(result.data).to.be.undefined
+      expect(result.error).to.deep.equal({error: {message: 'Step not found'}})
+    })
+
+    it('reports failure on a JSON 401', async () => {
+      fetchStub.resolves(Response.json({error: {message: 'Invalid credentials'}}, {status: 401}))
+
+      const result = await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.deep.equal({error: {message: 'Invalid credentials'}})
+    })
+
+    it('reports failure with raw text on a non-JSON HTTP error', async () => {
+      fetchStub.resolves(new Response('Log expired', {status: 410}))
+
+      const result = await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Log expired')
+    })
+
+    it('reports network failures as failed results', async () => {
+      fetchStub.rejects(new Error('Network timeout'))
+
+      const result = await api.getPipelineStepLog('ws', 'repo', '{pipe-1}', '{step-1}')
+
+      expect(result.success).to.be.false
+      expect(result.error).to.equal('Network timeout')
+    })
+  })
+
   describe('listPipelines', () => {
     it('calls GET with pagination params', async () => {
       fetchStub.resolves(Response.json({values: []}, {status: 200}))
