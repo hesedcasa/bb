@@ -435,23 +435,27 @@ describe('repo:clone', () => {
       {expectedNote: 'a non-Cloud stored host', host: 'https://selfhosted.example.net'},
     ]
 
+    async function expectCloudClone(host: string | undefined): Promise<void> {
+      const profile = {apiToken: 'test-token', email: 'test@example.com', host}
+      manager.loadAuthConfig.resolves(profile)
+      manager.readProfiles.resolves({default: profile})
+
+      const cmd = makeCommand(['ws', 'repo'])
+      await cmd.run()
+
+      expect(getRepositoryStub.calledOnceWith(profile, 'ws', 'repo')).to.be.true
+      expect(getCurrentUserStub.calledOnceWith(profile)).to.be.true
+      expect(cloneRepositoryStub.calledOnce).to.be.true
+      expect(cloneRepositoryStub.firstCall.args[0]).to.deep.equal({
+        credentials: {host: 'bitbucket.org', password: 'test-token', username: 'bb-account'},
+        destination: path.join(process.cwd(), 'repo'),
+        url: httpsHref,
+      })
+    }
+
     for (const {expectedNote, host} of profileShapes) {
       it(`clones through the Cloud endpoint for ${expectedNote}`, async () => {
-        const profile = {apiToken: 'test-token', email: 'test@example.com', host}
-        manager.loadAuthConfig.resolves(profile)
-        manager.readProfiles.resolves({default: profile})
-
-        const cmd = makeCommand(['ws', 'repo'])
-        await cmd.run()
-
-        expect(getRepositoryStub.calledOnceWith(profile, 'ws', 'repo')).to.be.true
-        expect(getCurrentUserStub.calledOnceWith(profile)).to.be.true
-        expect(cloneRepositoryStub.calledOnce).to.be.true
-        expect(cloneRepositoryStub.firstCall.args[0]).to.deep.equal({
-          credentials: {host: 'bitbucket.org', password: 'test-token', username: 'bb-account'},
-          destination: path.join(process.cwd(), 'repo'),
-          url: httpsHref,
-        })
+        await expectCloudClone(host)
       })
     }
   })
