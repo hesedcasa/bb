@@ -208,11 +208,14 @@ describe('e2e: auth lifecycle', () => {
       // eslint-disable-next-line no-await-in-loop
       const {stdout: remote} = await execFileAsync('git', ['-C', destination, 'remote', 'get-url', 'origin'])
       const url = remote.trim()
-      expect(url, `${label} profile stored a non-Cloud remote: ${redactSecret(url, apiToken)}`).to.match(
-        /^https:\/\/bitbucket\.org\//,
-      )
-      expect(url, `${label} profile stored credentials in the remote URL`).to.not.include('@')
-      expect(url, `${label} profile stored the API token in the remote URL`).to.not.include(apiToken)
+      // Chai renders the actual value in its failure message, so the raw URL
+      // and the live token stay out of the assertion values: assert booleans
+      // and keep only the redacted URL in the diagnostic message.
+      const redacted = redactSecret(url, apiToken)
+      const isCloudUrl = /^https:\/\/bitbucket\.org\//.test(url)
+      expect(isCloudUrl, `${label} profile stored a non-Cloud remote: ${redacted}`).to.be.true
+      expect(url.includes('@'), `${label} profile stored credentials in the remote URL: ${redacted}`).to.be.false
+      expect(url.includes(apiToken), `${label} profile stored the API token in the remote URL: ${redacted}`).to.be.false
     }
   })
 })
