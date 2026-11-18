@@ -423,4 +423,40 @@ describe('repo:clone', () => {
     expect(logged.error).to.be.a('string')
     expect(cloneRepositoryStub.called).to.be.false
   })
+
+  // Profiles may carry a stored host (a future Bitbucket Server pointer) or no
+  // host at all. Whichever value sits in the profile, an https clone must keep
+  // receiving the API-validated Cloud URL, the Cloud credential host, and the
+  // account name + token resolved from the profile.
+  describe('stored host does not affect https clone routing', () => {
+    const profileShapes: Array<{expectedNote: string; host?: string}> = [
+      {expectedNote: 'a host-less profile', host: undefined},
+      {expectedNote: 'the Cloud default host', host: 'https://bitbucket.org'},
+      {expectedNote: 'a non-Cloud stored host', host: 'https://selfhosted.example.net'},
+    ]
+
+    async function expectCloudClone(host: string | undefined): Promise<void> {
+      const profile = {apiToken: 'test-token', email: 'test@example.com', host}
+      manager.loadAuthConfig.resolves(profile)
+      manager.readProfiles.resolves({default: profile})
+
+      const cmd = makeCommand(['ws', 'repo'])
+      await cmd.run()
+
+      expect(getRepositoryStub.calledOnceWith(profile, 'ws', 'repo')).to.be.true
+      expect(getCurrentUserStub.calledOnceWith(profile)).to.be.true
+      expect(cloneRepositoryStub.calledOnce).to.be.true
+      expect(cloneRepositoryStub.firstCall.args[0]).to.deep.equal({
+        credentials: {host: 'bitbucket.org', password: 'test-token', username: 'bb-account'},
+        destination: path.join(process.cwd(), 'repo'),
+        url: httpsHref,
+      })
+    }
+
+    for (const {expectedNote, host} of profileShapes) {
+      it(`clones through the Cloud endpoint for ${expectedNote}`, async () => {
+        await expectCloudClone(host)
+      })
+    }
+  })
 })

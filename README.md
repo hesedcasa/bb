@@ -84,13 +84,13 @@ Add Bitbucket authentication
 
 ```
 USAGE
-  $ bb bb auth add -p <value> -t <value> -e <value> -u <value> [--json]
+  $ bb bb auth add -p <value> -t <value> -e <value> [--json] [-u <value>]
 
 FLAGS
   -e, --email=<value>     (required) Account email
   -p, --profile=<value>   (required) Profile name
   -t, --apiToken=<value>  (required) API Token
-  -u, --host=<value>      (required) Bitbucket instance URL
+  -u, --host=<value>      Bitbucket instance URL
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -207,13 +207,13 @@ Update Bitbucket authentication
 
 ```
 USAGE
-  $ bb bb auth update -p <value> -t <value> -e <value> -u <value> [--json]
+  $ bb bb auth update -p <value> -t <value> -e <value> [--json] [-u <value>]
 
 FLAGS
   -e, --email=<value>     (required) Account email
   -p, --profile=<value>   (required) Profile name
   -t, --apiToken=<value>  (required) API Token
-  -u, --host=<value>      (required) Bitbucket instance URL
+  -u, --host=<value>      Bitbucket instance URL
 
 GLOBAL FLAGS
   --json  Format output as json.

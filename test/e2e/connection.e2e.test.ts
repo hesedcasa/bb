@@ -1,6 +1,6 @@
 import {expect} from 'chai'
 
-import {createConfigDir, redactSecret, removeConfigDir, runCli, runCliJson} from './helpers.js'
+import {createConfigDir, redactSecret, removeConfigDir, runCli, runCliJson, runCliOk} from './helpers.js'
 
 type Failure = {error: unknown; success: boolean}
 
@@ -45,6 +45,38 @@ describe('e2e: connection', () => {
     const text = `some output embedding ${secret} in the middle of it`
 
     expect(redactSecret(text, secret)).to.not.include(secret)
+  })
+
+  // runCliOk() failure messages interpolate the rendered argv — the auth
+  // commands pass the token as a flag value — alongside stdout/stderr. A
+  // failing run whose argv carries the token (swapped for a synthetic value so
+  // the assertion itself can never expose the real one) must surface it only
+  // as <redacted>.
+  it('redacts a token from the argv, stdout and stderr of a failure message', async () => {
+    const synthetic = 'SEKRET-ARGV-PLACEHOLDER-0002'
+    const original = process.env.BITBUCKET_API_TOKEN
+    process.env.BITBUCKET_API_TOKEN = synthetic
+
+    try {
+      let failureMessage: string | undefined
+      try {
+        // Unknown flag: fails at parse time in both host modes, without a live
+        // API call, while carrying the synthetic token in the argv.
+        await runCliOk(['bb', 'auth', 'test', '--profile', 'default', '--api-token', synthetic], configDir)
+        expect.fail('expected the command to exit non-zero')
+      } catch (error) {
+        failureMessage = (error as Error).message
+      }
+
+      expect(failureMessage).to.include('<redacted>')
+      expect(failureMessage).to.not.include(synthetic)
+    } finally {
+      if (original === undefined) {
+        delete process.env.BITBUCKET_API_TOKEN
+      } else {
+        process.env.BITBUCKET_API_TOKEN = original
+      }
+    }
   })
 
   it('leaves text untouched when there is no secret to redact', () => {

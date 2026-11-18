@@ -173,8 +173,9 @@ function redactionToken(): string | undefined {
 /**
  * Runs the CLI and fails the test if it exited non-zero.
  *
- * The failure message redacts the API token from stdout/stderr before it is
- * interpolated, so a failing `bb auth …` call never prints the real token
+ * The failure message redacts the API token from stdout/stderr and from the
+ * rendered argv before it is interpolated, so a failing `bb auth …` call —
+ * whose argv carries the token as a flag value — never prints the real token
  * into mocha's failure output or CI logs. The returned `CliResult` itself is
  * left unredacted — tests need the real values to assert on.
  *
@@ -187,7 +188,8 @@ export async function runCliOk(args: string[], configDir: string): Promise<CliRe
   const secret = redactionToken()
   const stdout = redactSecret(result.stdout, secret)
   const stderr = redactSecret(result.stderr, secret)
-  expect(result.code, `\`bb ${args.join(' ')}\` failed:\n${stdout}\n${stderr}`).to.equal(0)
+  const argv = redactSecret(args.join(' '), secret)
+  expect(result.code, `\`bb ${argv}\` failed:\n${stdout}\n${stderr}`).to.equal(0)
   return result
 }
 

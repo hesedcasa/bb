@@ -1403,4 +1403,35 @@ describe('BitbucketApi', () => {
       expect(body.target.selector).to.be.undefined
     })
   })
+
+  // Profiles may carry a stored host (a future Bitbucket Server pointer) or no
+  // host at all. Whichever value sits in the profile, it must never reroute API
+  // requests away from the Cloud base URL, and the credentials must stay the
+  // profile's email + API token.
+  describe('stored host does not affect API routing', () => {
+    const profileShapes: Array<{expectedNote: string; host?: string}> = [
+      {expectedNote: 'a host-less profile', host: undefined},
+      {expectedNote: 'the Cloud default host', host: 'https://bitbucket.org'},
+      {expectedNote: 'a non-Cloud stored host', host: 'https://selfhosted.example.net'},
+    ]
+
+    async function expectCloudApiRequest(host: string | undefined): Promise<void> {
+      const shaped = new BitbucketApi({apiToken: 'tok-123', email: 'user@example.com', host})
+      fetchStub.resolves(Response.json({uuid: '{user-uuid}'}, {status: 200}))
+
+      const result = await shaped.getCurrentUser()
+
+      expect(result.success).to.be.true
+      const [url, options] = fetchStub.firstCall.args
+      expect(url).to.equal('https://api.bitbucket.org/2.0/user')
+      const expectedAuth = Buffer.from('user@example.com:tok-123').toString('base64')
+      expect(options.headers.Authorization).to.equal(`Basic ${expectedAuth}`)
+    }
+
+    for (const {expectedNote, host} of profileShapes) {
+      it(`targets the Cloud API for ${expectedNote}`, async () => {
+        await expectCloudApiRequest(host)
+      })
+    }
+  })
 })
