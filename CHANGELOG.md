@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/hesedcasa/bb/compare/v0.16.1...v0.17.0) (2026-11-18)
+
+
+### 🎉 Features
+
+* **auth:** make --host optional on auth add and update ([#193](https://github.com/hesedcasa/bb/issues/193)) ([c42c841](https://github.com/hesedcasa/bb/commit/c42c841a6bf94f26ed5a9b38d74d4f102f31bdcc))
+
 ## [0.16.1](https://github.com/hesedcasa/bb/compare/v0.16.0...v0.16.1) (2026-11-13)
 
 
